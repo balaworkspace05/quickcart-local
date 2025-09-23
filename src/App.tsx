@@ -12,6 +12,8 @@ import ProductListing from "@/pages/ProductListing";
 import OrderTracking from "@/pages/OrderTracking";
 import ShopkeeperDashboard from "@/pages/ShopkeeperDashboard";
 import DeliveryDashboard from "@/pages/DeliveryDashboard";
+import LoyaltyRewards from "@/pages/LoyaltyRewards";
+import Cart from "@/pages/Cart";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,7 +32,9 @@ const App = () => (
                 <Route path="/" element={<Landing />} />
                 <Route path="/shops" element={<ShopBrowser />} />
                 <Route path="/shop/:shopId" element={<ProductListing />} />
+                <Route path="/cart" element={<Cart />} />
                 <Route path="/orders" element={<OrderTracking />} />
+                <Route path="/loyalty" element={<LoyaltyRewards />} />
                 <Route path="/dashboard" element={<ShopkeeperDashboard />} />
                 <Route path="/inventory" element={<ShopkeeperDashboard />} />
                 <Route path="/analytics" element={<ShopkeeperDashboard />} />
