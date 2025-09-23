@@ -10,28 +10,25 @@ import {
   Menu, 
   X,
   Sun,
-  Moon
+  Moon,
+  Monitor
 } from 'lucide-react';
 import { useStore } from '@/store/useStore';
+import { useTheme } from '@/components/ThemeProvider';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Navigation() {
   const { currentRole, setCurrentRole, getCartItemCount, isCartOpen, setCartOpen } = useStore();
+  const { theme, setTheme } = useTheme();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
   const location = useLocation();
   const cartCount = getCartItemCount();
-
-  const toggleTheme = () => {
-    setIsDarkMode(!isDarkMode);
-    document.documentElement.classList.toggle('dark');
-  };
 
   const roleConfig = {
     customer: {
       icon: User,
       label: 'Customer',
-      color: 'bg-primary',
+      color: 'bg-gradient-primary',
       links: [
         { path: '/', label: 'Home' },
         { path: '/shops', label: 'Shops' },
@@ -42,7 +39,7 @@ export default function Navigation() {
     shopkeeper: {
       icon: Store,
       label: 'Shop Owner',
-      color: 'bg-secondary',
+      color: 'bg-gradient-secondary',
       links: [
         { path: '/dashboard', label: 'Dashboard' },
         { path: '/inventory', label: 'Inventory' },
@@ -61,94 +58,220 @@ export default function Navigation() {
     }
   };
 
+  const themeIcons = {
+    light: Sun,
+    dark: Moon,
+    system: Monitor
+  };
+
   const currentConfig = roleConfig[currentRole];
   const CurrentRoleIcon = currentConfig.icon;
+  const ThemeIcon = themeIcons[theme];
+
+  const navVariants = {
+    hidden: { y: -100, opacity: 0 },
+    visible: { 
+      y: 0, 
+      opacity: 1,
+      transition: {
+        type: "spring" as const,
+        stiffness: 300,
+        damping: 30,
+        duration: 0.6
+      }
+    }
+  };
+
+  const logoVariants = {
+    initial: { scale: 1, rotate: 0 },
+    hover: { 
+      scale: 1.1, 
+      rotate: 5,
+      transition: { type: "spring" as const, stiffness: 400, damping: 20 }
+    },
+    tap: { scale: 0.95 }
+  };
+
+  const linkVariants = {
+    initial: { y: 0 },
+    hover: { 
+      y: -2,
+      transition: { type: "spring" as const, stiffness: 400, damping: 20 }
+    }
+  };
+
+  const mobileMenuVariants = {
+    closed: {
+      opacity: 0,
+      height: 0,
+      transition: {
+        duration: 0.3,
+        ease: [0.4, 0, 0.2, 1] as [number, number, number, number]
+      }
+    },
+    open: {
+      opacity: 1,
+      height: "auto",
+      transition: {
+        duration: 0.4,
+        ease: [0.4, 0, 0.2, 1] as [number, number, number, number]
+      }
+    }
+  };
 
   return (
-    <nav className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
-      <div className="container mx-auto px-4 py-3">
+    <motion.nav 
+      className="sticky top-0 z-50 glass-card border-b border-white/20"
+      variants={navVariants}
+      initial="hidden"
+      animate="visible"
+    >
+      <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2 group">
-            <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center text-white font-bold group-hover:scale-105 transition-transform">
-              L
-            </div>
-            <span className="font-bold text-xl bg-gradient-primary bg-clip-text text-transparent">
+          <Link to="/" className="flex items-center space-x-2">
+            <motion.div 
+              className="relative"
+              variants={logoVariants}
+              initial="initial"
+              whileHover="hover"
+              whileTap="tap"
+            >
+              <div className="w-10 h-10 bg-gradient-primary rounded-xl flex items-center justify-center text-white font-bold shadow-lg glow-primary">
+                L
+              </div>
+              <div className="absolute inset-0 bg-gradient-primary rounded-xl opacity-50 blur-md -z-10" />
+            </motion.div>
+            <motion.span 
+              className="font-bold text-xl bg-gradient-primary bg-clip-text text-transparent"
+              whileHover={{ scale: 1.05 }}
+            >
               LocalCart
-            </span>
+            </motion.span>
           </Link>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-6">
             {currentConfig.links.map((link) => (
-              <Link
-                key={link.path}
-                to={link.path}
-                className={`px-3 py-2 rounded-lg transition-colors ${
-                  location.pathname === link.path
-                    ? 'bg-accent text-accent-foreground'
-                    : 'hover:bg-muted'
-                }`}
-              >
-                {link.label}
-              </Link>
+              <motion.div key={link.path} variants={linkVariants} whileHover="hover">
+                <Link
+                  to={link.path}
+                  className={`relative px-4 py-2 rounded-lg transition-all duration-300 ${
+                    location.pathname === link.path
+                      ? 'text-primary font-semibold'
+                      : 'hover:text-primary'
+                  }`}
+                >
+                  {link.label}
+                  {location.pathname === link.path && (
+                    <motion.div
+                      layoutId="activeLink"
+                      className="absolute inset-0 bg-gradient-primary/10 rounded-lg border border-primary/20"
+                      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                    />
+                  )}
+                </Link>
+              </motion.div>
             ))}
           </div>
 
           {/* Right Section */}
           <div className="flex items-center space-x-4">
             {/* Role Switcher */}
-            <div className="hidden md:flex items-center space-x-2">
+            <div className="hidden md:flex items-center space-x-3 glass-card p-2 rounded-xl">
               <select
                 value={currentRole}
                 onChange={(e) => setCurrentRole(e.target.value as any)}
-                className="px-3 py-1 rounded-md border bg-background text-sm"
+                className="bg-transparent text-sm font-medium focus:outline-none cursor-pointer"
               >
                 <option value="customer">Customer</option>
                 <option value="shopkeeper">Shop Owner</option>
                 <option value="delivery">Delivery Partner</option>
               </select>
-              <div className={`p-2 rounded-full ${currentConfig.color} text-white`}>
+              <motion.div 
+                className={`p-2 rounded-lg ${currentConfig.color} text-white shadow-lg`}
+                whileHover={{ scale: 1.1, rotate: 5 }}
+                whileTap={{ scale: 0.9 }}
+              >
                 <CurrentRoleIcon className="w-4 h-4" />
-              </div>
+              </motion.div>
             </div>
 
             {/* Theme Toggle */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={toggleTheme}
-              className="hidden md:flex"
+            <motion.button
+              onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+              className="hidden md:flex items-center justify-center w-10 h-10 glass-card rounded-lg hover:shadow-lg transition-all duration-300"
+              whileHover={{ scale: 1.1, rotate: 180 }}
+              whileTap={{ scale: 0.9 }}
             >
-              {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            </Button>
+              <ThemeIcon className="w-4 h-4" />
+            </motion.button>
 
             {/* Cart (Customer only) */}
             {currentRole === 'customer' && (
-              <Button
-                variant="ghost"
-                size="sm"
+              <motion.button
                 onClick={() => setCartOpen(!isCartOpen)}
-                className="relative hover:scale-105 transition-transform"
+                className="relative p-3 glass-card rounded-lg hover:shadow-lg transition-all duration-300"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                animate={cartCount > 0 ? { 
+                  boxShadow: "0 0 20px hsl(var(--primary) / 0.4)" 
+                } : {}}
               >
-                <ShoppingCart className={`w-5 h-5 ${cartCount > 0 ? 'animate-cart-wiggle' : ''}`} />
-                {cartCount > 0 && (
-                  <Badge className="absolute -top-2 -right-2 bg-secondary text-secondary-foreground min-w-[20px] h-5 flex items-center justify-center">
-                    {cartCount}
-                  </Badge>
-                )}
-              </Button>
+                <motion.div
+                  animate={cartCount > 0 ? { rotate: [0, -10, 10, 0] } : {}}
+                  transition={{ duration: 0.5 }}
+                >
+                  <ShoppingCart className="w-5 h-5" />
+                </motion.div>
+                <AnimatePresence>
+                  {cartCount > 0 && (
+                    <motion.div
+                      initial={{ scale: 0, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      exit={{ scale: 0, opacity: 0 }}
+                      className="absolute -top-2 -right-2"
+                    >
+                      <Badge className="bg-gradient-secondary text-secondary-foreground min-w-[20px] h-5 flex items-center justify-center shadow-lg animate-pulse-glow">
+                        {cartCount}
+                      </Badge>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.button>
             )}
 
             {/* Mobile Menu Toggle */}
-            <Button
-              variant="ghost"
-              size="sm"
+            <motion.button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden"
+              className="md:hidden p-2 glass-card rounded-lg"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
             >
-              {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </Button>
+              <AnimatePresence mode="wait">
+                {isMobileMenuOpen ? (
+                  <motion.div
+                    key="close"
+                    initial={{ rotate: -90, opacity: 0 }}
+                    animate={{ rotate: 0, opacity: 1 }}
+                    exit={{ rotate: 90, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <X className="w-5 h-5" />
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="menu"
+                    initial={{ rotate: 90, opacity: 0 }}
+                    animate={{ rotate: 0, opacity: 1 }}
+                    exit={{ rotate: -90, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <Menu className="w-5 h-5" />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.button>
           </div>
         </div>
 
@@ -156,45 +279,59 @@ export default function Navigation() {
         <AnimatePresence>
           {isMobileMenuOpen && (
             <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="md:hidden mt-4 pb-4 border-t border-border"
+              variants={mobileMenuVariants}
+              initial="closed"
+              animate="open"
+              exit="closed"
+              className="md:hidden mt-6 pb-6 border-t border-white/20 overflow-hidden"
             >
-              <div className="pt-4 space-y-3">
-                {currentConfig.links.map((link) => (
-                  <Link
+              <div className="pt-6 space-y-4">
+                {currentConfig.links.map((link, index) => (
+                  <motion.div
                     key={link.path}
-                    to={link.path}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className={`block px-3 py-2 rounded-lg transition-colors ${
-                      location.pathname === link.path
-                        ? 'bg-accent text-accent-foreground'
-                        : 'hover:bg-muted'
-                    }`}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.1 }}
                   >
-                    {link.label}
-                  </Link>
+                    <Link
+                      to={link.path}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className={`block px-4 py-3 rounded-lg glass-card transition-all duration-300 ${
+                        location.pathname === link.path
+                          ? 'text-primary font-semibold glow-primary'
+                          : 'hover:text-primary'
+                      }`}
+                    >
+                      {link.label}
+                    </Link>
+                  </motion.div>
                 ))}
                 
                 {/* Mobile Role Switcher */}
-                <div className="pt-2 border-t border-border">
-                  <label className="block text-sm font-medium mb-2">Switch Role:</label>
-                  <select
-                    value={currentRole}
-                    onChange={(e) => setCurrentRole(e.target.value as any)}
-                    className="w-full px-3 py-2 rounded-md border bg-background"
-                  >
-                    <option value="customer">Customer</option>
-                    <option value="shopkeeper">Shop Owner</option>
-                    <option value="delivery">Delivery Partner</option>
-                  </select>
-                </div>
+                <motion.div 
+                  className="pt-4 border-t border-white/20"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <label className="block text-sm font-medium mb-3">Switch Role:</label>
+                  <div className="glass-card p-3 rounded-lg">
+                    <select
+                      value={currentRole}
+                      onChange={(e) => setCurrentRole(e.target.value as any)}
+                      className="w-full bg-transparent font-medium focus:outline-none"
+                    >
+                      <option value="customer">Customer</option>
+                      <option value="shopkeeper">Shop Owner</option>
+                      <option value="delivery">Delivery Partner</option>
+                    </select>
+                  </div>
+                </motion.div>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
-    </nav>
+    </motion.nav>
   );
 }

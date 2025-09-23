@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
 import { Plus, Minus, ShoppingCart } from 'lucide-react';
 import { Product } from '@/data/mockData';
 import { useStore } from '@/store/useStore';
-import { motion } from 'framer-motion';
+import ConfettiButton from '@/components/ConfettiButton';
+import GlassmorphicCard from '@/components/GlassmorphicCard';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface ProductCardProps {
   product: Product;
@@ -14,14 +15,19 @@ interface ProductCardProps {
 export default function ProductCard({ product }: ProductCardProps) {
   const { addToCart, cartItems, updateCartQuantity } = useStore();
   const [quantity, setQuantity] = useState(1);
+  const [isAdding, setIsAdding] = useState(false);
   
   // Find current quantity in cart
   const cartItem = cartItems.find(item => item.product.id === product.id);
   const cartQuantity = cartItem?.quantity || 0;
   
   const handleAddToCart = () => {
+    setIsAdding(true);
     addToCart(product, quantity);
     setQuantity(1);
+    
+    // Reset animation state after delay
+    setTimeout(() => setIsAdding(false), 300);
   };
   
   const updateCart = (newQuantity: number) => {
@@ -36,125 +42,240 @@ export default function ProductCard({ product }: ProductCardProps) {
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : 0;
 
+  const cardVariants = {
+    hidden: { opacity: 0, y: 20, scale: 0.95 },
+    visible: { 
+      opacity: 1, 
+      y: 0, 
+      scale: 1,
+      transition: {
+        type: "spring" as const,
+        stiffness: 300,
+        damping: 25,
+        duration: 0.6
+      }
+    }
+  };
+
   return (
     <motion.div
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
+      variants={cardVariants}
+      initial="hidden"
+      animate="visible"
       className="h-full"
     >
-      <Card className="h-full bg-gradient-card border-0 shadow-card hover:shadow-floating transition-all duration-300">
-        <CardContent className="p-4 flex flex-col h-full">
-          {/* Product Image & Discount Badge */}
-          <div className="relative mb-3">
-            <div className="w-full h-32 bg-muted rounded-lg flex items-center justify-center text-4xl">
+      <GlassmorphicCard 
+        className="h-full p-4 card-tilt"
+        intensity="medium"
+        glow={cartQuantity > 0}
+        hover
+      >
+        {/* Product Image & Badges */}
+        <div className="relative mb-4">
+          <motion.div 
+            className="w-full h-32 bg-gradient-to-br from-primary/5 to-secondary/5 rounded-xl flex items-center justify-center text-4xl overflow-hidden"
+            whileHover={{ scale: 1.05 }}
+            transition={{ type: "spring", stiffness: 400, damping: 25 }}
+          >
+            <motion.span
+              className="text-5xl filter drop-shadow-lg"
+              animate={{ 
+                rotate: isAdding ? [0, -10, 10, -5, 5, 0] : 0,
+                scale: isAdding ? [1, 1.2, 1] : 1 
+              }}
+              transition={{ duration: 0.5 }}
+            >
               {product.image}
-            </div>
+            </motion.span>
+          </motion.div>
+          
+          <AnimatePresence>
             {discountPercentage > 0 && (
-              <Badge className="absolute -top-2 -right-2 bg-secondary text-secondary-foreground">
-                {discountPercentage}% OFF
-              </Badge>
+              <motion.div
+                initial={{ scale: 0, rotate: -12 }}
+                animate={{ scale: 1, rotate: -12 }}
+                exit={{ scale: 0, rotate: -12 }}
+                className="absolute -top-2 -right-2"
+              >
+                <Badge className="bg-gradient-secondary text-secondary-foreground shadow-lg animate-pulse-glow">
+                  {discountPercentage}% OFF
+                </Badge>
+              </motion.div>
             )}
+          </AnimatePresence>
+          
+          <AnimatePresence>
             {product.stock <= 5 && product.stock > 0 && (
-              <Badge className="absolute -top-2 -left-2 bg-warning text-warning-foreground">
-                Low Stock
-              </Badge>
+              <motion.div
+                initial={{ scale: 0, x: -10 }}
+                animate={{ scale: 1, x: 0 }}
+                exit={{ scale: 0, x: -10 }}
+                className="absolute -top-2 -left-2"
+              >
+                <Badge className="bg-warning text-warning-foreground shadow-lg">
+                  Low Stock
+                </Badge>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+        
+        {/* Product Info */}
+        <div className="flex-1 space-y-3">
+          <motion.h3 
+            className="font-semibold text-sm leading-tight"
+            whileHover={{ scale: 1.02 }}
+          >
+            {product.name}
+          </motion.h3>
+          <p className="text-xs text-muted-foreground">{product.unit}</p>
+          
+          {/* Price with Animation */}
+          <div className="flex items-center gap-2">
+            <motion.span 
+              className="font-bold text-lg bg-gradient-primary bg-clip-text text-transparent"
+              animate={{ scale: isAdding ? [1, 1.1, 1] : 1 }}
+              transition={{ duration: 0.3 }}
+            >
+              ₹{product.price}
+            </motion.span>
+            {product.originalPrice && (
+              <motion.span 
+                className="text-sm text-muted-foreground line-through"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.2 }}
+              >
+                ₹{product.originalPrice}
+              </motion.span>
             )}
           </div>
           
-          {/* Product Info */}
-          <div className="flex-1 space-y-2">
-            <h3 className="font-semibold text-sm leading-tight">{product.name}</h3>
-            <p className="text-xs text-muted-foreground">{product.unit}</p>
-            
-            {/* Price */}
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-lg text-primary">₹{product.price}</span>
-              {product.originalPrice && (
-                <span className="text-sm text-muted-foreground line-through">₹{product.originalPrice}</span>
-              )}
-            </div>
-            
-            {/* Stock Status */}
+          {/* Stock Status */}
+          <AnimatePresence mode="wait">
             {product.stock === 0 ? (
-              <Badge variant="destructive" className="text-xs">Out of Stock</Badge>
+              <motion.div
+                key="out-of-stock"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+              >
+                <Badge variant="destructive" className="text-xs">Out of Stock</Badge>
+              </motion.div>
             ) : (
-              <Badge variant="secondary" className="text-xs">
-                {product.stock} in stock
-              </Badge>
+              <motion.div
+                key="in-stock"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+              >
+                <Badge variant="secondary" className="text-xs glass-card">
+                  {product.stock} in stock
+                </Badge>
+              </motion.div>
             )}
-          </div>
-          
-          {/* Add to Cart Section */}
-          <div className="mt-4 space-y-2">
+          </AnimatePresence>
+        </div>
+        
+        {/* Add to Cart Section */}
+        <div className="mt-4 space-y-3">
+          <AnimatePresence mode="wait">
             {cartQuantity > 0 ? (
               /* Already in cart - show quantity controls */
-              <div className="flex items-center justify-between bg-accent rounded-lg p-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
+              <motion.div
+                key="in-cart"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                className="flex items-center justify-between glass-card p-3 rounded-xl glow-primary"
+              >
+                <motion.button
                   onClick={() => updateCart(cartQuantity - 1)}
-                  className="h-8 w-8 p-0"
+                  className="w-8 h-8 rounded-full bg-gradient-primary text-primary-foreground flex items-center justify-center shadow-lg hover:shadow-xl transition-all"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
                 >
                   <Minus className="w-3 h-3" />
-                </Button>
-                <span className="font-semibold text-accent-foreground">{cartQuantity}</span>
-                <Button
-                  variant="ghost"
-                  size="sm"
+                </motion.button>
+                
+                <motion.span 
+                  className="font-bold text-lg"
+                  animate={{ scale: [1, 1.2, 1] }}
+                  transition={{ duration: 0.3 }}
+                  key={cartQuantity}
+                >
+                  {cartQuantity}
+                </motion.span>
+                
+                <motion.button
                   onClick={() => updateCart(cartQuantity + 1)}
-                  className="h-8 w-8 p-0"
                   disabled={cartQuantity >= product.stock}
+                  className="w-8 h-8 rounded-full bg-gradient-primary text-primary-foreground flex items-center justify-center shadow-lg hover:shadow-xl transition-all disabled:opacity-50"
+                  whileHover={{ scale: cartQuantity < product.stock ? 1.1 : 1 }}
+                  whileTap={{ scale: cartQuantity < product.stock ? 0.9 : 1 }}
                 >
                   <Plus className="w-3 h-3" />
-                </Button>
-              </div>
+                </motion.button>
+              </motion.div>
             ) : (
               /* Not in cart - show add controls */
-              <>
+              <motion.div
+                key="not-in-cart"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+              >
                 {product.stock > 0 && (
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center bg-muted rounded-lg">
-                      <Button
-                        variant="ghost"
-                        size="sm"
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between glass-card p-2 rounded-lg">
+                      <motion.button
                         onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                        className="h-8 w-8 p-0"
+                        className="w-8 h-8 rounded-full bg-muted hover:bg-muted/80 flex items-center justify-center transition-colors"
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
                       >
                         <Minus className="w-3 h-3" />
-                      </Button>
-                      <span className="px-3 text-sm font-medium">{quantity}</span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
+                      </motion.button>
+                      
+                      <motion.span 
+                        className="px-4 text-sm font-medium"
+                        key={quantity}
+                        animate={{ scale: [1, 1.1, 1] }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        {quantity}
+                      </motion.span>
+                      
+                      <motion.button
                         onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
-                        className="h-8 w-8 p-0"
+                        className="w-8 h-8 rounded-full bg-muted hover:bg-muted/80 flex items-center justify-center transition-colors"
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
                       >
                         <Plus className="w-3 h-3" />
-                      </Button>
+                      </motion.button>
                     </div>
                     
-                    <Button
+                    <ConfettiButton
                       onClick={handleAddToCart}
-                      disabled={product.stock === 0}
-                      className="bg-gradient-primary hover:bg-primary-hover text-primary-foreground"
-                      size="sm"
+                      className="w-full bg-gradient-primary hover:shadow-lg transition-all btn-premium"
                     >
-                      <ShoppingCart className="w-3 h-3 mr-1" />
-                      Add
-                    </Button>
+                      <ShoppingCart className="w-4 h-4 mr-2" />
+                      Add to Cart
+                    </ConfettiButton>
                   </div>
                 )}
                 
                 {product.stock === 0 && (
-                  <Button disabled className="w-full" size="sm">
+                  <Button disabled className="w-full opacity-50">
                     Out of Stock
                   </Button>
                 )}
-              </>
+              </motion.div>
             )}
-          </div>
-        </CardContent>
-      </Card>
+          </AnimatePresence>
+        </div>
+      </GlassmorphicCard>
     </motion.div>
   );
 }
