@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Clock, MapPin, Star, Tag } from 'lucide-react';
-import { Shop } from '@/data/mockData';
+import { Shop } from '@/hooks/useShops';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
@@ -11,13 +11,15 @@ interface ShopCardProps {
 }
 
 export default function ShopCard({ shop }: ShopCardProps) {
-  const categoryColors = {
+  const categoryColors: Record<string, string> = {
     grocery: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
     pharmacy: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
     bakery: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
     electronics: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
     clothing: 'bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200'
   };
+
+  const categoryColor = categoryColors[shop.category.toLowerCase()] || 'bg-gray-100 text-gray-800';
 
   return (
     <motion.div
@@ -31,23 +33,23 @@ export default function ShopCard({ shop }: ShopCardProps) {
           <div className="flex items-start justify-between mb-3">
             <div className="flex items-center space-x-3">
               <div className="w-12 h-12 bg-gradient-primary rounded-full flex items-center justify-center text-white text-2xl">
-                {shop.logo}
+                {shop.logo_url || '🏪'}
               </div>
               <div className="flex-1">
                 <h3 className="font-semibold text-lg leading-tight">{shop.name}</h3>
-                <Badge className={`text-xs ${categoryColors[shop.category]}`}>
+                <Badge className={`text-xs ${categoryColor}`}>
                   {shop.category.charAt(0).toUpperCase() + shop.category.slice(1)}
                 </Badge>
               </div>
             </div>
             
             <div className="flex flex-col items-end space-y-1">
-              <Badge variant={shop.isOpen ? "default" : "secondary"} className="text-xs">
-                {shop.isOpen ? 'Open' : 'Closed'}
+              <Badge variant={shop.is_open ? "default" : "secondary"} className="text-xs">
+                {shop.is_open ? 'Open' : 'Closed'}
               </Badge>
               <div className="flex items-center space-x-1 text-xs text-muted-foreground">
                 <Star className="w-3 h-3 fill-current text-warning" />
-                <span className="font-medium">{shop.rating}</span>
+                <span className="font-medium">{shop.rating?.toFixed(1) || '0.0'}</span>
               </div>
             </div>
           </div>
@@ -56,33 +58,23 @@ export default function ShopCard({ shop }: ShopCardProps) {
           <div className="space-y-2 mb-3">
             <div className="flex items-center space-x-2 text-sm text-muted-foreground">
               <MapPin className="w-4 h-4" />
-              <span>{shop.distance} km away</span>
+              <span>{shop.distance} away</span>
             </div>
             
             <div className="flex items-center space-x-2 text-sm text-muted-foreground">
               <Clock className="w-4 h-4" />
-              <span>{shop.deliveryTime}</span>
+              <span>{shop.delivery_time}</span>
             </div>
           </div>
-          
-          {/* Offers */}
-          {shop.offers && (
-            <div className="bg-accent rounded-lg p-2 mb-3">
-              <div className="flex items-center space-x-2 text-sm">
-                <Tag className="w-4 h-4 text-secondary" />
-                <span className="font-medium text-accent-foreground">{shop.offers}</span>
-              </div>
-            </div>
-          )}
         </CardContent>
         
         <CardFooter className="pt-0 px-4 pb-4">
           <Link to={`/shop/${shop.id}`} className="w-full">
             <Button 
               className="w-full bg-gradient-primary hover:bg-primary-hover text-primary-foreground"
-              disabled={!shop.isOpen}
+              disabled={!shop.is_open}
             >
-              {shop.isOpen ? 'Browse Products' : 'Currently Closed'}
+              {shop.is_open ? 'Browse Products' : 'Currently Closed'}
             </Button>
           </Link>
         </CardFooter>

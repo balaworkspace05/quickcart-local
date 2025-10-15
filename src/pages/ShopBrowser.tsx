@@ -3,12 +3,17 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Filter, MapPin, Grid, List } from 'lucide-react';
-import { mockShops } from '@/data/mockData';
+import { Search, Filter, MapPin, Grid, List, Loader2, Plus } from 'lucide-react';
+import { useShops } from '@/hooks/useShops';
+import { useSeedData } from '@/hooks/useSeedData';
+import { useAuth } from '@/hooks/useAuth';
 import ShopCard from '@/components/ShopCard';
 import { motion } from 'framer-motion';
 
 export default function ShopBrowser() {
+  const { user } = useAuth();
+  const { data: shops, isLoading } = useShops();
+  const seedData = useSeedData();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('distance');
@@ -30,9 +35,9 @@ export default function ShopBrowser() {
   ];
 
   // Filter and sort shops
-  let filteredShops = mockShops.filter(shop => {
+  let filteredShops = (shops || []).filter(shop => {
     const matchesSearch = shop.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || shop.category === selectedCategory;
+    const matchesCategory = selectedCategory === 'all' || shop.category.toLowerCase() === selectedCategory.toLowerCase();
     return matchesSearch && matchesCategory;
   });
 
@@ -40,15 +45,23 @@ export default function ShopBrowser() {
   filteredShops = filteredShops.sort((a, b) => {
     switch (sortBy) {
       case 'distance':
-        return a.distance - b.distance;
+        return parseFloat(a.distance) - parseFloat(b.distance);
       case 'rating':
-        return b.rating - a.rating;
+        return (b.rating || 0) - (a.rating || 0);
       case 'delivery-time':
-        return parseInt(a.deliveryTime.split('-')[0]) - parseInt(b.deliveryTime.split('-')[0]);
+        return parseInt(a.delivery_time.split('-')[0]) - parseInt(b.delivery_time.split('-')[0]);
       default:
         return 0;
     }
   });
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -67,10 +80,33 @@ export default function ShopBrowser() {
             </Button>
           </div>
           
-          <h1 className="text-3xl font-bold mb-2">Browse Shops</h1>
-          <p className="text-muted-foreground">
-            Discover local stores in your neighborhood
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold mb-2">Browse Shops</h1>
+              <p className="text-muted-foreground">
+                Discover local stores in your neighborhood
+              </p>
+            </div>
+            {user && shops && shops.length === 0 && (
+              <Button
+                onClick={() => seedData.mutate()}
+                disabled={seedData.isPending}
+                size="sm"
+              >
+                {seedData.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  <>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Sample Data
+                  </>
+                )}
+              </Button>
+            )}
+          </div>
         </motion.div>
 
         {/* Search and Filters */}
