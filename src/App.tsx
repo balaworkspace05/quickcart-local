@@ -18,6 +18,7 @@ import LoyaltyRewards from "@/pages/LoyaltyRewards";
 import Cart from "@/pages/Cart";
 import Auth from "@/pages/Auth";
 import AuthCallback from "@/pages/AuthCallback";
+import Profile from "@/pages/Profile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -64,6 +65,14 @@ const App = () => (
                     } 
                   />
                   <Route 
+                    path="/profile" 
+                    element={
+                      <ProtectedRoute>
+                        <Profile />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route
                     path="/dashboard" 
                     element={
                       <ProtectedRoute requireRole="shopkeeper">

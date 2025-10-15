@@ -14,6 +14,8 @@ import {
 import { Link } from 'react-router-dom';
 import { testimonials } from '@/data/mockData';
 import { motion } from 'framer-motion';
+import FeaturedShopsCarousel from '@/components/revenue/FeaturedShopsCarousel';
+import OffersCarousel from '@/components/revenue/OffersCarousel';
 
 export default function Landing() {
   const features = [
@@ -39,6 +41,11 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen">
+      {/* Featured Shops Carousel */}
+      <div className="container mx-auto px-4 py-8">
+        <FeaturedShopsCarousel />
+      </div>
+
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-hero text-white py-20 lg:py-32">
         <div className="absolute inset-0 bg-black/20"></div>
@@ -102,6 +109,11 @@ export default function Landing() {
           </motion.div>
         </div>
       </section>
+
+      {/* Offers Section */}
+      <div className="container mx-auto px-4">
+        <OffersCarousel location="Koramangala" />
+      </div>
 
       {/* Features Section */}
       <section className="py-20 bg-muted/30">

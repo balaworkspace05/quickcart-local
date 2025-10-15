@@ -9,6 +9,7 @@ import { mockShops, mockProducts } from '@/data/mockData';
 import { useStore } from '@/store/useStore';
 import ProductCard from '@/components/ProductCard';
 import { motion } from 'framer-motion';
+import Recommendations from '@/components/revenue/Recommendations';
 
 export default function ProductListing() {
   const { shopId } = useParams();
@@ -213,6 +214,11 @@ export default function ProductListing() {
               Clear Search
             </Button>
           </motion.div>
+        )}
+
+        {/* Recommendations Section */}
+        {filteredProducts.length > 0 && (
+          <Recommendations productCategory={selectedCategory !== 'all' ? selectedCategory : 'bread'} />
         )}
 
         {/* Shop Info Footer */}

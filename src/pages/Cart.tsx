@@ -10,6 +10,7 @@ import SavingsBar from '@/components/SavingsBar';
 import ScratchCard from '@/components/ScratchCard';
 import AdBanner from '@/components/AdBanner';
 import GlassmorphicCard from '@/components/GlassmorphicCard';
+import BNPLOption from '@/components/revenue/BNPLOption';
 import { useState } from 'react';
 
 export default function Cart() {
@@ -23,6 +24,7 @@ export default function Cart() {
   
   const [scratchRevealed, setScratchRevealed] = useState(false);
   const [couponDiscount, setCouponDiscount] = useState(0);
+  const [paymentMethod, setPaymentMethod] = useState<'now' | 'later' | null>(null);
 
   // Group items by shop
   const itemsByShop = cartItems.reduce((acc, item) => {
@@ -274,11 +276,23 @@ export default function Cart() {
                   <span>₹{finalTotal}</span>
                 </div>
 
+                <Separator />
+
+                {/* Payment Options */}
+                <div>
+                  <h3 className="font-semibold mb-4">Payment Method</h3>
+                  <BNPLOption 
+                    totalAmount={finalTotal}
+                    onSelectPayment={setPaymentMethod}
+                  />
+                </div>
+
                 <Button 
                   className="w-full bg-gradient-primary text-lg py-6"
                   size="lg"
+                  disabled={!paymentMethod}
                 >
-                  Proceed to Checkout
+                  {paymentMethod === 'later' ? 'Place Order' : 'Proceed to Payment'}
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
 
