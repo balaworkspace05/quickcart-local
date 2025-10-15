@@ -8,6 +8,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import PageTransition from "@/components/PageTransition";
 import Navigation from "@/components/Navigation";
+import AnimatedBackground from "@/components/AnimatedBackground";
 import Landing from "@/pages/Landing";
 import ShopBrowser from "@/pages/ShopBrowser";
 import ProductListing from "@/pages/ProductListing";
@@ -31,7 +32,8 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <AuthProvider>
-            <div className="min-h-screen bg-background">
+            <div className="min-h-screen bg-background font-body">
+              <AnimatedBackground />
               <Navigation />
               <PageTransition>
                 <Routes>
