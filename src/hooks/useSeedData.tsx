@@ -2,6 +2,32 @@ import { useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+// Helper to upload placeholder image to storage
+  const uploadPlaceholderImage = async (bucket: string, path: string, color: string) => {
+    // Create a simple SVG placeholder
+    const svg = `<svg width="400" height="400" xmlns="http://www.w3.org/2000/svg">
+      <rect width="400" height="400" fill="${color}"/>
+      <text x="50%" y="50%" text-anchor="middle" dy=".3em" fill="white" font-size="24" font-family="Arial">
+        ${path.split('/')[0]}
+      </text>
+    </svg>`;
+    
+    const blob = new Blob([svg], { type: 'image/svg+xml' });
+    const file = new File([blob], path, { type: 'image/svg+xml' });
+    
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .upload(path, file, { upsert: true });
+    
+    if (error) throw error;
+    
+    const { data: { publicUrl } } = supabase.storage
+      .from(bucket)
+      .getPublicUrl(data.path);
+    
+    return publicUrl;
+  };
+
 export function useSeedData() {
   return useMutation({
     mutationFn: async () => {
@@ -22,6 +48,11 @@ export function useSeedData() {
           .insert({ user_id: user.id, role: 'shopkeeper' });
       }
 
+      // Upload shop logos
+      const groceryLogo = await uploadPlaceholderImage('shop-images', 'grocery-logo.svg', '#10b981');
+      const pharmacyLogo = await uploadPlaceholderImage('shop-images', 'pharmacy-logo.svg', '#3b82f6');
+      const bakeryLogo = await uploadPlaceholderImage('shop-images', 'bakery-logo.svg', '#f59e0b');
+
       // Create sample shops
       const shops = [
         {
@@ -33,7 +64,7 @@ export function useSeedData() {
           is_open: true,
           delivery_time: "20-30 mins",
           distance: "1.2 km",
-          logo_url: "🛒",
+          logo_url: groceryLogo,
         },
         {
           owner_id: user.id,
@@ -44,7 +75,7 @@ export function useSeedData() {
           is_open: true,
           delivery_time: "15-25 mins",
           distance: "0.8 km",
-          logo_url: "💊",
+          logo_url: pharmacyLogo,
         },
         {
           owner_id: user.id,
@@ -55,7 +86,7 @@ export function useSeedData() {
           is_open: true,
           delivery_time: "25-35 mins",
           distance: "2.1 km",
-          logo_url: "🍞",
+          logo_url: bakeryLogo,
         },
       ];
 
@@ -68,6 +99,15 @@ export function useSeedData() {
 
       // Create sample products for each shop
       if (createdShops) {
+        // Upload product images
+        const milkImage = await uploadPlaceholderImage('product-images', 'milk.svg', '#e0f2fe');
+        const breadImage = await uploadPlaceholderImage('product-images', 'bread.svg', '#fed7aa');
+        const eggsImage = await uploadPlaceholderImage('product-images', 'eggs.svg', '#fef3c7');
+        const medicineImage = await uploadPlaceholderImage('product-images', 'medicine.svg', '#dbeafe');
+        const sanitizerImage = await uploadPlaceholderImage('product-images', 'sanitizer.svg', '#e0e7ff');
+        const cakeImage = await uploadPlaceholderImage('product-images', 'cake.svg', '#ffe4e6');
+        const croissantImage = await uploadPlaceholderImage('product-images', 'croissant.svg', '#fef9c3');
+
         const products = [
           // Fresh Mart Grocery
           {
@@ -80,7 +120,7 @@ export function useSeedData() {
             category: "Dairy",
             unit: "1L",
             is_available: true,
-            image_url: "🥛",
+            image_url: milkImage,
           },
           {
             shop_id: createdShops[0].id,
@@ -91,7 +131,7 @@ export function useSeedData() {
             category: "Bakery",
             unit: "400g",
             is_available: true,
-            image_url: "🍞",
+            image_url: breadImage,
           },
           {
             shop_id: createdShops[0].id,
@@ -103,7 +143,7 @@ export function useSeedData() {
             category: "Dairy",
             unit: "12 pcs",
             is_available: true,
-            image_url: "🥚",
+            image_url: eggsImage,
           },
           // MediCare Pharmacy
           {
@@ -115,7 +155,7 @@ export function useSeedData() {
             category: "Medicine",
             unit: "10 tablets",
             is_available: true,
-            image_url: "💊",
+            image_url: medicineImage,
           },
           {
             shop_id: createdShops[1].id,
@@ -126,7 +166,7 @@ export function useSeedData() {
             category: "Health",
             unit: "500ml",
             is_available: true,
-            image_url: "🧴",
+            image_url: sanitizerImage,
           },
           // Baker's Delight
           {
@@ -139,7 +179,7 @@ export function useSeedData() {
             category: "Cakes",
             unit: "500g",
             is_available: true,
-            image_url: "🎂",
+            image_url: cakeImage,
           },
           {
             shop_id: createdShops[2].id,
@@ -150,7 +190,7 @@ export function useSeedData() {
             category: "Pastries",
             unit: "2 pcs",
             is_available: true,
-            image_url: "🥐",
+            image_url: croissantImage,
           },
         ];
 
