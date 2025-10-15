@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -11,18 +11,37 @@ import {
   X,
   Sun,
   Moon,
-  Monitor
+  Monitor,
+  LogOut
 } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { useTheme } from '@/components/ThemeProvider';
+import { useAuth } from '@/hooks/useAuth';
 import { motion, AnimatePresence } from 'framer-motion';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function Navigation() {
+  const navigate = useNavigate();
+  const { user, userRole, signOut } = useAuth();
   const { currentRole, setCurrentRole, getCartItemCount, isCartOpen, setCartOpen } = useStore();
   const { theme, setTheme } = useTheme();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
   const cartCount = getCartItemCount();
+
+  // Sync currentRole with userRole from auth
+  useEffect(() => {
+    if (userRole) {
+      setCurrentRole(userRole);
+    }
+  }, [userRole, setCurrentRole]);
 
   const roleConfig = {
     customer: {
@@ -177,25 +196,19 @@ export default function Navigation() {
 
           {/* Right Section */}
           <div className="flex items-center space-x-4">
-            {/* Role Switcher */}
-            <div className="hidden md:flex items-center space-x-3 glass-card p-2 rounded-xl">
-              <select
-                value={currentRole}
-                onChange={(e) => setCurrentRole(e.target.value as any)}
-                className="bg-transparent text-sm font-medium focus:outline-none cursor-pointer"
-              >
-                <option value="customer">Customer</option>
-                <option value="shopkeeper">Shop Owner</option>
-                <option value="delivery">Delivery Partner</option>
-              </select>
-              <motion.div 
-                className={`p-2 rounded-lg ${currentConfig.color} text-white shadow-lg`}
-                whileHover={{ scale: 1.1, rotate: 5 }}
-                whileTap={{ scale: 0.9 }}
-              >
-                <CurrentRoleIcon className="w-4 h-4" />
-              </motion.div>
-            </div>
+            {/* Role Indicator (for authenticated users) */}
+            {user && userRole && (
+              <div className="hidden md:flex items-center space-x-3 glass-card px-3 py-2 rounded-xl">
+                <span className="text-sm font-medium">{currentConfig.label}</span>
+                <motion.div 
+                  className={`p-2 rounded-lg ${currentConfig.color} text-white shadow-lg`}
+                  whileHover={{ scale: 1.1, rotate: 5 }}
+                  whileTap={{ scale: 0.9 }}
+                >
+                  <CurrentRoleIcon className="w-4 h-4" />
+                </motion.div>
+              </div>
+            )}
 
             {/* Theme Toggle */}
             <motion.button
@@ -208,7 +221,7 @@ export default function Navigation() {
             </motion.button>
 
             {/* Cart (Customer only) */}
-            {currentRole === 'customer' && (
+            {user && currentRole === 'customer' && (
               <motion.button
                 onClick={() => setCartOpen(!isCartOpen)}
                 className="relative p-3 glass-card rounded-lg hover:shadow-lg transition-all duration-300"
@@ -239,6 +252,50 @@ export default function Navigation() {
                   )}
                 </AnimatePresence>
               </motion.button>
+            )}
+
+            {/* User Menu or Sign In */}
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <motion.button
+                    className="p-3 glass-card rounded-lg hover:shadow-lg transition-all duration-300"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <User className="w-5 h-5" />
+                  </motion.button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {userRole && (
+                    <DropdownMenuItem disabled className="text-xs">
+                      Role: {userRole.charAt(0).toUpperCase() + userRole.slice(1)}
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem onClick={() => navigate('/orders')}>
+                    Orders
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/loyalty')}>
+                    Rewards
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={signOut} className="text-destructive">
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Sign Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button 
+                variant="default" 
+                size="sm" 
+                onClick={() => navigate('/auth')}
+                className="hidden md:flex"
+              >
+                Sign In
+              </Button>
             )}
 
             {/* Mobile Menu Toggle */}
@@ -307,26 +364,52 @@ export default function Navigation() {
                   </motion.div>
                 ))}
                 
-                {/* Mobile Role Switcher */}
-                <motion.div 
-                  className="pt-4 border-t border-white/20"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
-                >
-                  <label className="block text-sm font-medium mb-3">Switch Role:</label>
-                  <div className="glass-card p-3 rounded-lg">
-                    <select
-                      value={currentRole}
-                      onChange={(e) => setCurrentRole(e.target.value as any)}
-                      className="w-full bg-transparent font-medium focus:outline-none"
+                {/* Mobile Auth Section */}
+                {user ? (
+                  <motion.div 
+                    className="pt-4 border-t border-white/20 space-y-3"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                  >
+                    {userRole && (
+                      <div className="glass-card p-3 rounded-lg text-sm">
+                        <span className="text-muted-foreground">Role:</span>{' '}
+                        <span className="font-medium">{userRole.charAt(0).toUpperCase() + userRole.slice(1)}</span>
+                      </div>
+                    )}
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      className="w-full"
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        signOut();
+                      }}
                     >
-                      <option value="customer">Customer</option>
-                      <option value="shopkeeper">Shop Owner</option>
-                      <option value="delivery">Delivery Partner</option>
-                    </select>
-                  </div>
-                </motion.div>
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Sign Out
+                    </Button>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    className="pt-4 border-t border-white/20"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                  >
+                    <Button
+                      variant="default"
+                      className="w-full"
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        navigate('/auth');
+                      }}
+                    >
+                      Sign In
+                    </Button>
+                  </motion.div>
+                )}
               </div>
             </motion.div>
           )}
