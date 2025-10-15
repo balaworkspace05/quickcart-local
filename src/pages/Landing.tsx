@@ -462,53 +462,219 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="relative py-12 glass-card border-t border-white/10">
-        <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-4 gap-8">
-            <div>
-              <div className="flex items-center space-x-2 mb-4">
-                <div className="w-10 h-10 bg-gradient-primary rounded-xl flex items-center justify-center text-white font-bold shadow-lg">
-                  L
+      {/* Premium Animated Footer */}
+      <footer className="relative py-20 overflow-hidden">
+        {/* Animated Background */}
+        <div className="absolute inset-0 bg-gradient-to-b from-background to-muted/30">
+          <motion.div
+            className="absolute top-0 left-0 w-full h-full opacity-30"
+            animate={{
+              backgroundPosition: ["0% 0%", "100% 100%"],
+            }}
+            transition={{ duration: 30, repeat: Infinity, repeatType: "reverse" }}
+            style={{
+              backgroundImage: "radial-gradient(circle at 20% 50%, hsl(var(--primary) / 0.15) 0%, transparent 50%), radial-gradient(circle at 80% 80%, hsl(var(--secondary) / 0.15) 0%, transparent 50%)",
+              backgroundSize: "200% 200%",
+            }}
+          />
+          
+          {/* Floating orbs */}
+          <motion.div
+            className="absolute top-20 left-10 w-64 h-64 bg-primary/10 rounded-full blur-3xl"
+            animate={{
+              x: [0, 100, 0],
+              y: [0, 50, 0],
+            }}
+            transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
+          />
+          <motion.div
+            className="absolute bottom-20 right-10 w-64 h-64 bg-secondary/10 rounded-full blur-3xl"
+            animate={{
+              x: [0, -100, 0],
+              y: [0, -50, 0],
+            }}
+            transition={{ duration: 25, repeat: Infinity, ease: "easeInOut" }}
+          />
+        </div>
+        
+        <div className="container mx-auto px-4 relative z-10">
+          <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-12 mb-16">
+            {/* Brand Section */}
+            <div className="lg:col-span-2">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6 }}
+                viewport={{ once: true }}
+              >
+                <div className="flex items-center space-x-3 mb-6">
+                  <motion.div 
+                    className="w-14 h-14 bg-gradient-primary rounded-2xl flex items-center justify-center text-white font-bold text-2xl shadow-glow"
+                    whileHover={{ scale: 1.1, rotate: 5 }}
+                    transition={{ type: "spring", stiffness: 400 }}
+                  >
+                    L
+                  </motion.div>
+                  <div>
+                    <span className="font-display font-black text-3xl bg-gradient-primary bg-clip-text text-transparent">
+                      LocalCart
+                    </span>
+                    <div className="text-xs text-muted-foreground font-body">Shop Local, Live Better</div>
+                  </div>
                 </div>
-                <span className="font-display font-bold text-2xl bg-gradient-primary bg-clip-text text-transparent">LocalCart</span>
-              </div>
-              <p className="text-muted-foreground font-body leading-relaxed">
-                Supporting local businesses while delivering convenience to your doorstep.
-              </p>
+                <p className="text-muted-foreground font-body leading-relaxed mb-6 max-w-sm">
+                  Connecting you with neighborhood stores for ultra-fast delivery while supporting your local community.
+                </p>
+                
+                {/* Social Icons */}
+                <div className="flex gap-3">
+                  {['Twitter', 'Facebook', 'Instagram', 'LinkedIn'].map((social) => (
+                    <motion.button
+                      key={social}
+                      className="w-10 h-10 glass-card rounded-xl flex items-center justify-center hover:border-primary/30 transition-all duration-300"
+                      whileHover={{ scale: 1.1, y: -2 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <div className="w-5 h-5 bg-gradient-primary rounded-full" />
+                    </motion.button>
+                  ))}
+                </div>
+              </motion.div>
             </div>
             
-            <div>
-              <h4 className="font-display font-bold mb-4">Company</h4>
-              <ul className="space-y-2 text-muted-foreground font-body">
-                <li><Link to="/about" className="hover:text-foreground transition-colors">About</Link></li>
-                <li><Link to="/careers" className="hover:text-foreground transition-colors">Careers</Link></li>
-                <li><Link to="/press" className="hover:text-foreground transition-colors">Press</Link></li>
+            {/* Quick Links */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              viewport={{ once: true }}
+            >
+              <h4 className="font-display font-bold text-lg mb-6 relative inline-block">
+                Company
+                <div className="absolute -bottom-2 left-0 w-12 h-1 bg-gradient-primary rounded-full" />
+              </h4>
+              <ul className="space-y-3 text-muted-foreground font-body">
+                <li>
+                  <Link to="/about" className="hover:text-primary transition-colors duration-300 inline-flex items-center group">
+                    <ChevronRight className="w-4 h-4 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all duration-300" />
+                    About Us
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/careers" className="hover:text-primary transition-colors duration-300 inline-flex items-center group">
+                    <ChevronRight className="w-4 h-4 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all duration-300" />
+                    Careers
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/press" className="hover:text-primary transition-colors duration-300 inline-flex items-center group">
+                    <ChevronRight className="w-4 h-4 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all duration-300" />
+                    Press Kit
+                  </Link>
+                </li>
               </ul>
-            </div>
+            </motion.div>
             
-            <div>
-              <h4 className="font-display font-bold mb-4">Support</h4>
-              <ul className="space-y-2 text-muted-foreground font-body">
-                <li><Link to="/contact" className="hover:text-foreground transition-colors">Contact</Link></li>
-                <li><Link to="/help" className="hover:text-foreground transition-colors">Help Center</Link></li>
-                <li><Link to="/feedback" className="hover:text-foreground transition-colors">Feedback</Link></li>
+            {/* Support */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              viewport={{ once: true }}
+            >
+              <h4 className="font-display font-bold text-lg mb-6 relative inline-block">
+                Support
+                <div className="absolute -bottom-2 left-0 w-12 h-1 bg-gradient-secondary rounded-full" />
+              </h4>
+              <ul className="space-y-3 text-muted-foreground font-body">
+                <li>
+                  <Link to="/contact" className="hover:text-primary transition-colors duration-300 inline-flex items-center group">
+                    <ChevronRight className="w-4 h-4 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all duration-300" />
+                    Contact
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/help" className="hover:text-primary transition-colors duration-300 inline-flex items-center group">
+                    <ChevronRight className="w-4 h-4 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all duration-300" />
+                    Help Center
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/feedback" className="hover:text-primary transition-colors duration-300 inline-flex items-center group">
+                    <ChevronRight className="w-4 h-4 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all duration-300" />
+                    Feedback
+                  </Link>
+                </li>
               </ul>
-            </div>
+            </motion.div>
             
-            <div>
-              <h4 className="font-display font-bold mb-4">Legal</h4>
-              <ul className="space-y-2 text-muted-foreground font-body">
-                <li><Link to="/privacy" className="hover:text-foreground transition-colors">Privacy</Link></li>
-                <li><Link to="/terms" className="hover:text-foreground transition-colors">Terms</Link></li>
-                <li><Link to="/cookies" className="hover:text-foreground transition-colors">Cookies</Link></li>
+            {/* Legal */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              viewport={{ once: true }}
+            >
+              <h4 className="font-display font-bold text-lg mb-6 relative inline-block">
+                Legal
+                <div className="absolute -bottom-2 left-0 w-12 h-1 bg-gradient-to-r from-accent to-primary rounded-full" />
+              </h4>
+              <ul className="space-y-3 text-muted-foreground font-body">
+                <li>
+                  <Link to="/privacy" className="hover:text-primary transition-colors duration-300 inline-flex items-center group">
+                    <ChevronRight className="w-4 h-4 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all duration-300" />
+                    Privacy Policy
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/terms" className="hover:text-primary transition-colors duration-300 inline-flex items-center group">
+                    <ChevronRight className="w-4 h-4 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all duration-300" />
+                    Terms of Service
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/cookies" className="hover:text-primary transition-colors duration-300 inline-flex items-center group">
+                    <ChevronRight className="w-4 h-4 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all duration-300" />
+                    Cookie Policy
+                  </Link>
+                </li>
               </ul>
-            </div>
+            </motion.div>
           </div>
           
-          <div className="border-t border-white/10 mt-8 pt-8 text-center text-muted-foreground">
-            <p className="font-body">&copy; 2024 LocalCart. All rights reserved.</p>
-          </div>
+          {/* Bottom Bar */}
+          <motion.div 
+            className="border-t border-white/10 pt-8"
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            viewport={{ once: true }}
+          >
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+              <div className="text-sm text-muted-foreground font-body">
+                © 2024 LocalCart. All rights reserved. Made with{' '}
+                <Heart className="inline w-4 h-4 text-secondary fill-secondary animate-pulse" />{' '}
+                for local communities.
+              </div>
+              
+              <div className="flex items-center gap-6 text-sm text-muted-foreground font-body">
+                <motion.div 
+                  className="flex items-center gap-2 glass-card px-4 py-2 rounded-full"
+                  whileHover={{ scale: 1.05 }}
+                >
+                  <Shield className="w-4 h-4 text-primary" />
+                  <span>Secure Payments</span>
+                </motion.div>
+                <motion.div 
+                  className="flex items-center gap-2 glass-card px-4 py-2 rounded-full"
+                  whileHover={{ scale: 1.05 }}
+                >
+                  <Zap className="w-4 h-4 text-warning" />
+                  <span>Fast Delivery</span>
+                </motion.div>
+              </div>
+            </div>
+          </motion.div>
         </div>
       </footer>
     </div>
