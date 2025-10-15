@@ -11,9 +11,7 @@ interface AuthContextType {
   session: Session | null;
   userRole: UserRole | null;
   loading: boolean;
-  signUp: (email: string, password: string, name: string, role: UserRole) => Promise<void>;
-  signIn: (email: string, password: string) => Promise<void>;
-  signInWithGoogle: () => Promise<void>;
+  signInWithMagicLink: (email: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -73,70 +71,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const signUp = async (email: string, password: string, name: string, role: UserRole) => {
-    try {
-      const redirectUrl = `${window.location.origin}/`;
-      
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: redirectUrl,
-          data: {
-            name,
-          }
-        }
-      });
-
-      if (error) throw error;
-
-      if (data.user) {
-        // Create user role
-        const { error: roleError } = await supabase
-          .from('user_roles')
-          .insert({ user_id: data.user.id, role });
-
-        if (roleError) throw roleError;
-
-        toast.success('Account created! Please check your email to verify.');
-      }
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to sign up');
-      throw error;
-    }
-  };
-
-  const signIn = async (email: string, password: string) => {
-    try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) throw error;
-
-      toast.success('Signed in successfully!');
-      navigate('/');
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to sign in');
-      throw error;
-    }
-  };
-
-  const signInWithGoogle = async () => {
+  const signInWithMagicLink = async (email: string) => {
     try {
       const redirectUrl = `${window.location.origin}/auth/callback`;
       
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
         options: {
-          redirectTo: redirectUrl,
+          emailRedirectTo: redirectUrl,
         }
       });
 
       if (error) throw error;
+
+      toast.success('Check your email for the magic link!');
     } catch (error: any) {
-      toast.error(error.message || 'Failed to sign in with Google');
+      toast.error(error.message || 'Failed to send magic link');
       throw error;
     }
   };
@@ -162,9 +112,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       session, 
       userRole, 
       loading, 
-      signUp, 
-      signIn, 
-      signInWithGoogle, 
+      signInWithMagicLink, 
       signOut 
     }}>
       {children}
