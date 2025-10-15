@@ -46,129 +46,168 @@ export default function Landing() {
         <FeaturedShopsCarousel />
       </div>
 
-      {/* Hero Section */}
-      <section className="relative overflow-hidden py-20 lg:py-32">
-        {/* Animated gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-hero opacity-90"></div>
-        <motion.div 
-          className="absolute inset-0"
-          animate={{
-            background: [
-              "radial-gradient(circle at 20% 50%, hsl(var(--primary) / 0.3) 0%, transparent 50%)",
-              "radial-gradient(circle at 80% 50%, hsl(var(--secondary) / 0.3) 0%, transparent 50%)",
-              "radial-gradient(circle at 20% 50%, hsl(var(--primary) / 0.3) 0%, transparent 50%)",
-            ]
-          }}
-          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-        />
-        
-        <div className="container mx-auto px-4 relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="max-w-4xl mx-auto text-center"
-          >
+      {/* Hero Section - Asymmetric Split Design */}
+      <section className="relative min-h-[90vh] flex items-center overflow-hidden">
+        <div className="container mx-auto px-4">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            {/* Left Content */}
             <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.2, duration: 0.5 }}
+              initial={{ opacity: 0, x: -50 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              className="relative z-10"
             >
-              <Badge className="mb-6 glass-card text-white border-white/30 px-6 py-2 text-base backdrop-blur-xl">
-                ✨ Now delivering in 15+ cities
-              </Badge>
-            </motion.div>
-            
-            <motion.h1 
-              className="text-4xl md:text-6xl lg:text-7xl font-display font-bold mb-6 leading-tight text-white"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3, duration: 0.8 }}
-            >
-              Shop Local.
-              <br />
-              <span className="bg-gradient-to-r from-secondary via-accent to-secondary bg-clip-text text-transparent animate-gradient-shift bg-[length:200%_auto]">
-                Get Faster.
-              </span>
-              <br />
-              Pay Less.
-            </motion.h1>
-            
-            <motion.p 
-              className="text-xl md:text-2xl mb-8 text-white/90 max-w-2xl mx-auto font-body"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.5, duration: 0.8 }}
-            >
-              Connect with neighborhood stores and get ultra-fast delivery while supporting your local community.
-            </motion.p>
-            
-            <motion.div 
-              className="flex flex-col sm:flex-row gap-4 justify-center items-center"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.7, duration: 0.6 }}
-            >
-              <Link to="/shops">
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.2, duration: 0.6 }}
+                className="inline-block"
+              >
+                <Badge className="mb-6 glass-card border-primary/30 px-6 py-3 text-base backdrop-blur-xl">
+                  ✨ Live in 15+ Cities
+                </Badge>
+              </motion.div>
+              
+              <h1 className="text-5xl md:text-7xl lg:text-8xl font-display font-black mb-6 leading-[0.9]">
+                <motion.span 
+                  className="block mb-2"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3, duration: 0.6 }}
                 >
+                  Shop
+                </motion.span>
+                <motion.span 
+                  className="block bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5, duration: 0.6 }}
+                >
+                  Hyperlocal
+                </motion.span>
+                <motion.span 
+                  className="block text-muted-foreground text-4xl md:text-5xl lg:text-6xl mt-3"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.7, duration: 0.6 }}
+                >
+                  Live Fast.
+                </motion.span>
+              </h1>
+              
+              <motion.p 
+                className="text-lg md:text-xl text-muted-foreground mb-8 max-w-lg font-body leading-relaxed"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.9, duration: 0.6 }}
+              >
+                Your neighborhood stores, now online. Get ultra-fast delivery while supporting local businesses in your community.
+              </motion.p>
+              
+              <motion.div 
+                className="flex flex-wrap gap-4"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1.1, duration: 0.6 }}
+              >
+                <Link to="/shops">
                   <Button 
                     size="lg" 
-                    variant="glass"
-                    className="bg-white/95 text-primary hover:bg-white hover:shadow-glow text-lg px-10 py-6 h-auto font-semibold"
+                    variant="premium"
+                    className="text-lg px-10 py-7 h-auto font-bold shadow-glow"
                   >
-                    Shop Now
-                    <ChevronRight className="ml-2 w-5 h-5" />
+                    Explore Shops
+                    <ChevronRight className="ml-2 w-6 h-6" />
                   </Button>
-                </motion.div>
-              </Link>
-              
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
+                </Link>
+                
                 <Button 
                   variant="glass" 
                   size="lg" 
-                  className="border-2 border-white/30 text-white hover:bg-white/10 hover:border-white/50 text-lg px-10 py-6 h-auto backdrop-blur-xl"
+                  className="text-lg px-10 py-7 h-auto border-2 border-primary/20"
                 >
-                  Download App
+                  How It Works
                 </Button>
+              </motion.div>
+              
+              {/* Stats */}
+              <motion.div 
+                className="mt-12 grid grid-cols-3 gap-6"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1.3, duration: 0.6 }}
+              >
+                <div>
+                  <div className="text-3xl font-display font-bold bg-gradient-primary bg-clip-text text-transparent">15min</div>
+                  <div className="text-sm text-muted-foreground font-body">Avg Delivery</div>
+                </div>
+                <div>
+                  <div className="text-3xl font-display font-bold bg-gradient-secondary bg-clip-text text-transparent">500+</div>
+                  <div className="text-sm text-muted-foreground font-body">Local Shops</div>
+                </div>
+                <div>
+                  <div className="text-3xl font-display font-bold bg-gradient-to-r from-accent to-primary bg-clip-text text-transparent">100%</div>
+                  <div className="text-sm text-muted-foreground font-body">Authentic</div>
+                </div>
               </motion.div>
             </motion.div>
             
-            <motion.div 
-              className="mt-12 flex flex-wrap items-center justify-center gap-6 text-white/90"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.9, duration: 0.6 }}
+            {/* Right Visual */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.4, duration: 1, ease: "easeOut" }}
+              className="relative hidden lg:block"
             >
-              <motion.div 
-                className="flex items-center space-x-2 glass-card px-4 py-2 rounded-full backdrop-blur-xl"
-                whileHover={{ scale: 1.05, y: -2 }}
-              >
-                <Clock className="w-5 h-5" />
-                <span className="font-medium">15-min delivery</span>
-              </motion.div>
-              <motion.div 
-                className="flex items-center space-x-2 glass-card px-4 py-2 rounded-full backdrop-blur-xl"
-                whileHover={{ scale: 1.05, y: -2 }}
-              >
-                <Shield className="w-5 h-5" />
-                <span className="font-medium">100% authentic</span>
-              </motion.div>
-              <motion.div 
-                className="flex items-center space-x-2 glass-card px-4 py-2 rounded-full backdrop-blur-xl"
-                whileHover={{ scale: 1.05, y: -2 }}
-              >
-                <Heart className="w-5 h-5" />
-                <span className="font-medium">Support local</span>
-              </motion.div>
+              <div className="relative w-full h-[600px]">
+                {/* Floating Cards */}
+                <motion.div
+                  className="absolute top-0 right-0 w-64 glass-card p-6 rounded-3xl border border-white/20 shadow-glow backdrop-blur-xl"
+                  animate={{ y: [0, -20, 0], rotate: [0, 2, 0] }}
+                  transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+                >
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-12 h-12 bg-gradient-primary rounded-xl" />
+                    <div>
+                      <div className="font-display font-bold">Fresh Veggies</div>
+                      <div className="text-xs text-muted-foreground">2 min away</div>
+                    </div>
+                  </div>
+                  <Badge className="bg-success/20 text-success border-success/30">Available Now</Badge>
+                </motion.div>
+                
+                <motion.div
+                  className="absolute bottom-20 left-0 w-64 glass-card p-6 rounded-3xl border border-white/20 shadow-floating backdrop-blur-xl"
+                  animate={{ y: [0, 20, 0], rotate: [0, -2, 0] }}
+                  transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+                >
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-12 h-12 bg-gradient-secondary rounded-xl" />
+                    <div>
+                      <div className="font-display font-bold">Bakery Fresh</div>
+                      <div className="text-xs text-muted-foreground">5 min away</div>
+                    </div>
+                  </div>
+                  <Badge className="bg-warning/20 text-warning border-warning/30">Hot Deals</Badge>
+                </motion.div>
+                
+                <motion.div
+                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 glass-card p-8 rounded-3xl border-2 border-primary/30 shadow-glow backdrop-blur-xl"
+                  animate={{ scale: [1, 1.05, 1] }}
+                  transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+                >
+                  <Clock className="w-8 h-8 text-primary mb-3" />
+                  <div className="font-display font-bold text-2xl mb-2">Lightning Fast</div>
+                  <div className="text-muted-foreground font-body">15-minute delivery to your doorstep</div>
+                </motion.div>
+              </div>
             </motion.div>
-          </motion.div>
+          </div>
         </div>
+        
+        {/* Background Elements */}
+        <div className="absolute top-20 right-20 w-96 h-96 bg-primary/10 rounded-full blur-[100px] -z-10" />
+        <div className="absolute bottom-20 left-20 w-96 h-96 bg-secondary/10 rounded-full blur-[100px] -z-10" />
       </section>
 
       {/* Offers Section */}
