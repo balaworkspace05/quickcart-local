@@ -14,16 +14,424 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      ads: {
+        Row: {
+          active_status: boolean | null
+          clicks_count: number | null
+          created_at: string
+          description: string | null
+          duration_days: number
+          end_date: string | null
+          id: string
+          image_url: string
+          impressions_count: number | null
+          shop_id: string
+          start_date: string
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          active_status?: boolean | null
+          clicks_count?: number | null
+          created_at?: string
+          description?: string | null
+          duration_days?: number
+          end_date?: string | null
+          id?: string
+          image_url: string
+          impressions_count?: number | null
+          shop_id: string
+          start_date?: string
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active_status?: boolean | null
+          clicks_count?: number | null
+          created_at?: string
+          description?: string | null
+          duration_days?: number
+          end_date?: string | null
+          id?: string
+          image_url?: string
+          impressions_count?: number | null
+          shop_id?: string
+          start_date?: string
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ads_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      deliveries: {
+        Row: {
+          created_at: string
+          delivery_time: string | null
+          id: string
+          order_id: string
+          partner_id: string | null
+          pickup_time: string | null
+          status: Database["public"]["Enums"]["delivery_status"]
+          tracking_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          delivery_time?: string | null
+          id?: string
+          order_id: string
+          partner_id?: string | null
+          pickup_time?: string | null
+          status?: Database["public"]["Enums"]["delivery_status"]
+          tracking_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          delivery_time?: string | null
+          id?: string
+          order_id?: string
+          partner_id?: string | null
+          pickup_time?: string | null
+          status?: Database["public"]["Enums"]["delivery_status"]
+          tracking_url?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deliveries_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: true
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      order_items: {
+        Row: {
+          created_at: string
+          id: string
+          order_id: string
+          price: number
+          product_id: string
+          quantity: number
+          shop_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          order_id: string
+          price: number
+          product_id: string
+          quantity: number
+          shop_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          order_id?: string
+          price?: number
+          product_id?: string
+          quantity?: number
+          shop_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          created_at: string
+          delivery_address: string
+          delivery_instructions: string | null
+          id: string
+          payment_intent_id: string | null
+          payment_status: string | null
+          status: Database["public"]["Enums"]["order_status"]
+          total_amount: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          delivery_address: string
+          delivery_instructions?: string | null
+          id?: string
+          payment_intent_id?: string | null
+          payment_status?: string | null
+          status?: Database["public"]["Enums"]["order_status"]
+          total_amount: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          delivery_address?: string
+          delivery_instructions?: string | null
+          id?: string
+          payment_intent_id?: string | null
+          payment_status?: string | null
+          status?: Database["public"]["Enums"]["order_status"]
+          total_amount?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      products: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          is_available: boolean | null
+          name: string
+          original_price: number | null
+          price: number
+          shop_id: string
+          stock: number
+          unit: string | null
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_available?: boolean | null
+          name: string
+          original_price?: number | null
+          price: number
+          shop_id: string
+          stock?: number
+          unit?: string | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_available?: boolean | null
+          name?: string
+          original_price?: number | null
+          price?: number
+          shop_id?: string
+          stock?: number
+          unit?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          address: string | null
+          avatar_url: string | null
+          created_at: string
+          id: string
+          name: string
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          avatar_url?: string | null
+          created_at?: string
+          id: string
+          name: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          avatar_url?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      reviews: {
+        Row: {
+          created_at: string
+          feedback: string | null
+          id: string
+          order_id: string | null
+          product_id: string
+          rating: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          feedback?: string | null
+          id?: string
+          order_id?: string | null
+          product_id: string
+          rating: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          feedback?: string | null
+          id?: string
+          order_id?: string | null
+          product_id?: string
+          rating?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shops: {
+        Row: {
+          category: string
+          created_at: string
+          delivery_time: string | null
+          distance: string | null
+          id: string
+          is_open: boolean | null
+          location: string
+          logo_url: string | null
+          name: string
+          owner_id: string
+          rating: number | null
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          delivery_time?: string | null
+          distance?: string | null
+          id?: string
+          is_open?: boolean | null
+          location: string
+          logo_url?: string | null
+          name: string
+          owner_id: string
+          rating?: number | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          delivery_time?: string | null
+          distance?: string | null
+          id?: string
+          is_open?: boolean | null
+          location?: string
+          logo_url?: string | null
+          name?: string
+          owner_id?: string
+          rating?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_role: {
+        Args: { _user_id: string }
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "customer" | "shopkeeper" | "delivery"
+      delivery_status: "assigned" | "picked-up" | "in-transit" | "delivered"
+      order_status:
+        | "pending"
+        | "confirmed"
+        | "packed"
+        | "out-for-delivery"
+        | "delivered"
+        | "cancelled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +558,17 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["customer", "shopkeeper", "delivery"],
+      delivery_status: ["assigned", "picked-up", "in-transit", "delivered"],
+      order_status: [
+        "pending",
+        "confirmed",
+        "packed",
+        "out-for-delivery",
+        "delivered",
+        "cancelled",
+      ],
+    },
   },
 } as const
