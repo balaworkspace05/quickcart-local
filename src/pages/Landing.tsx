@@ -318,66 +318,147 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-20 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-hero"></div>
-        <motion.div 
-          className="absolute inset-0 opacity-30"
-          animate={{
-            backgroundPosition: ["0% 0%", "100% 100%"],
-          }}
-          transition={{ duration: 20, repeat: Infinity, repeatType: "reverse" }}
-          style={{
-            backgroundImage: "radial-gradient(circle, hsl(var(--primary) / 0.3) 1px, transparent 1px)",
-            backgroundSize: "50px 50px",
-          }}
-        />
-        
-        <div className="container mx-auto px-4 text-center relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            viewport={{ once: true }}
-          >
-            <h2 className="text-3xl md:text-5xl font-display font-bold mb-4 text-white">
-              Ready to Support Local?
-            </h2>
-            <p className="text-xl mb-8 text-white/90 max-w-2xl mx-auto font-body">
-              Join thousands of customers who choose to shop local and get lightning-fast delivery.
-            </p>
-            
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/shops">
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <Button 
-                    size="lg" 
-                    variant="glass"
-                    className="bg-white text-primary hover:bg-white/95 hover:shadow-glow text-lg px-10 py-6 h-auto font-semibold"
-                  >
-                    Start Shopping
-                    <ChevronRight className="ml-2 w-5 h-5" />
-                  </Button>
-                </motion.div>
-              </Link>
-              
+      {/* CTA Section - Unique Bento Box Design */}
+      <section className="py-32 relative">
+        <div className="container mx-auto px-4">
+          <div className="grid lg:grid-cols-2 gap-8 max-w-7xl mx-auto">
+            {/* Left - Main CTA Card */}
+            <motion.div
+              initial={{ opacity: 0, x: -50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8 }}
+              viewport={{ once: true }}
+              className="relative glass-card border-2 border-primary/20 rounded-[3rem] p-12 overflow-hidden group hover:border-primary/40 transition-all duration-500"
+            >
+              {/* Animated background gradient */}
               <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                className="absolute inset-0 bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10"
+                animate={{
+                  scale: [1, 1.2, 1],
+                  rotate: [0, 90, 0],
+                }}
+                transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
+              />
+              
+              <div className="relative z-10">
+                <div className="inline-block mb-6">
+                  <Badge className="glass-card border-primary/30 px-4 py-2 text-base backdrop-blur-xl">
+                    🎯 Join LocalCart
+                  </Badge>
+                </div>
+                
+                <h2 className="text-4xl md:text-6xl font-display font-black mb-6 leading-tight">
+                  Ready to
+                  <br />
+                  <span className="bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
+                    Go Local?
+                  </span>
+                </h2>
+                
+                <p className="text-lg text-muted-foreground mb-8 font-body max-w-md">
+                  Join thousands of smart shoppers supporting local businesses while enjoying lightning-fast delivery.
+                </p>
+                
+                <Link to="/shops">
+                  <motion.div
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <Button 
+                      size="lg" 
+                      variant="premium"
+                      className="text-lg px-10 py-7 h-auto font-bold shadow-glow w-full sm:w-auto"
+                    >
+                      Start Shopping Now
+                      <ChevronRight className="ml-2 w-6 h-6" />
+                    </Button>
+                  </motion.div>
+                </Link>
+                
+                {/* Trust indicators */}
+                <div className="mt-8 flex flex-wrap gap-4 items-center">
+                  <div className="flex -space-x-2">
+                    {[1, 2, 3, 4].map((i) => (
+                      <div key={i} className="w-10 h-10 rounded-full bg-gradient-primary border-2 border-background" />
+                    ))}
+                  </div>
+                  <div className="text-sm text-muted-foreground font-body">
+                    <span className="font-bold text-foreground">10,000+</span> happy customers
+                  </div>
+                </div>
+              </div>
+              
+              {/* Decorative elements */}
+              <div className="absolute -top-20 -right-20 w-40 h-40 bg-primary/20 rounded-full blur-3xl group-hover:bg-primary/30 transition-all duration-500" />
+              <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-secondary/20 rounded-full blur-3xl group-hover:bg-secondary/30 transition-all duration-500" />
+            </motion.div>
+            
+            {/* Right - Feature Cards Grid */}
+            <div className="grid grid-rows-2 gap-8">
+              {/* Partner CTA */}
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.2 }}
+                viewport={{ once: true }}
+                className="glass-card border border-white/10 rounded-[2rem] p-8 hover:border-secondary/30 transition-all duration-500 group relative overflow-hidden"
               >
-                <Button 
-                  variant="glass" 
-                  size="lg" 
-                  className="border-2 border-white/30 text-white hover:bg-white/10 hover:border-white/50 text-lg px-10 py-6 h-auto backdrop-blur-xl"
-                >
-                  Become a Partner
-                </Button>
+                <motion.div
+                  className="absolute top-0 right-0 w-32 h-32 bg-secondary/20 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500"
+                />
+                
+                <div className="relative z-10">
+                  <Store className="w-12 h-12 text-secondary mb-4" />
+                  <h3 className="text-2xl font-display font-bold mb-3">Own a Shop?</h3>
+                  <p className="text-muted-foreground font-body mb-6">
+                    Partner with us and reach thousands of local customers.
+                  </p>
+                  <Button 
+                    variant="glass" 
+                    className="border-2 border-secondary/30 hover:border-secondary/50 w-full"
+                  >
+                    Become a Partner
+                  </Button>
+                </div>
+              </motion.div>
+              
+              {/* Stats Card */}
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.4 }}
+                viewport={{ once: true }}
+                className="glass-card border border-white/10 rounded-[2rem] p-8 relative overflow-hidden"
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-primary/5" />
+                
+                <div className="relative z-10">
+                  <div className="grid grid-cols-2 gap-6">
+                    <div>
+                      <Zap className="w-8 h-8 text-accent mb-2" />
+                      <div className="text-3xl font-display font-bold mb-1">15min</div>
+                      <div className="text-sm text-muted-foreground font-body">Fast Delivery</div>
+                    </div>
+                    <div>
+                      <Shield className="w-8 h-8 text-primary mb-2" />
+                      <div className="text-3xl font-display font-bold mb-1">100%</div>
+                      <div className="text-sm text-muted-foreground font-body">Authentic</div>
+                    </div>
+                    <div>
+                      <Heart className="w-8 h-8 text-secondary mb-2" />
+                      <div className="text-3xl font-display font-bold mb-1">500+</div>
+                      <div className="text-sm text-muted-foreground font-body">Local Shops</div>
+                    </div>
+                    <div>
+                      <Star className="w-8 h-8 text-warning mb-2" />
+                      <div className="text-3xl font-display font-bold mb-1">4.8</div>
+                      <div className="text-sm text-muted-foreground font-body">Avg Rating</div>
+                    </div>
+                  </div>
+                </div>
               </motion.div>
             </div>
-          </motion.div>
+          </div>
         </div>
       </section>
 
