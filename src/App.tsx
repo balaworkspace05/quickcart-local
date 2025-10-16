@@ -27,6 +27,10 @@ import Privacy from "@/pages/Privacy";
 import Terms from "@/pages/Terms";
 import NotFound from "./pages/NotFound";
 import AdminDashboard from "./pages/AdminDashboard";
+import CustomerDashboard from "./pages/CustomerDashboard";
+import CustomerProfile from "./pages/CustomerProfile";
+import CustomerFeedback from "./pages/CustomerFeedback";
+import VendorProfile from "./pages/VendorProfile";
 
 const queryClient = new QueryClient();
 
@@ -134,6 +138,38 @@ const App = () => (
                     element={
                       <ProtectedRoute requireRole="admin">
                         <AdminDashboard />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/customer/dashboard" 
+                    element={
+                      <ProtectedRoute requireRole="customer">
+                        <CustomerDashboard />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/customer/profile" 
+                    element={
+                      <ProtectedRoute requireRole="customer">
+                        <CustomerProfile />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/customer/feedback" 
+                    element={
+                      <ProtectedRoute requireRole="customer">
+                        <CustomerFeedback />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/vendor/profile" 
+                    element={
+                      <ProtectedRoute requireRole="shopkeeper">
+                        <VendorProfile />
                       </ProtectedRoute>
                     } 
                   />

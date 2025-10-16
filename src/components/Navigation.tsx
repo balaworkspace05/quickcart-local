@@ -49,10 +49,10 @@ export default function Navigation() {
       label: 'Customer',
       color: 'bg-gradient-primary',
       links: [
-        { path: '/', label: 'Home' },
+        { path: '/customer/dashboard', label: 'Dashboard' },
         { path: '/shops', label: 'Shops' },
         { path: '/orders', label: 'Orders' },
-        { path: '/feedback', label: 'Feedback' }
+        { path: '/customer/feedback', label: 'Feedback' }
       ]
     },
     shopkeeper: {

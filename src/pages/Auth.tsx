@@ -200,7 +200,7 @@ export default function Auth() {
         if (roleData) {
           switch (roleData.role) {
             case 'customer':
-              navigate('/');
+              navigate('/customer/dashboard');
               break;
             case 'shopkeeper':
               navigate('/dashboard');
@@ -212,10 +212,10 @@ export default function Auth() {
               navigate('/admin');
               break;
             default:
-              navigate('/');
+              navigate('/customer/dashboard');
           }
         } else {
-          navigate('/');
+          navigate('/customer/dashboard');
         }
         toast.success('Login successful!');
       }
