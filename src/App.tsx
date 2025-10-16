@@ -14,6 +14,7 @@ import ShopBrowser from "@/pages/ShopBrowser";
 import ProductListing from "@/pages/ProductListing";
 import OrderTracking from "@/pages/OrderTracking";
 import ShopkeeperDashboard from "@/pages/ShopkeeperDashboard";
+import VendorDashboard from "@/pages/VendorDashboard";
 import DeliveryDashboard from "@/pages/DeliveryDashboard";
 import LoyaltyRewards from "@/pages/LoyaltyRewards";
 import Cart from "@/pages/Cart";
@@ -162,6 +163,14 @@ const App = () => (
                     element={
                       <ProtectedRoute requireRole="customer">
                         <CustomerFeedback />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/vendor/dashboard" 
+                    element={
+                      <ProtectedRoute requireRole="shopkeeper">
+                        <VendorDashboard />
                       </ProtectedRoute>
                     } 
                   />

@@ -203,7 +203,7 @@ export default function Auth() {
               navigate('/customer/dashboard');
               break;
             case 'shopkeeper':
-              navigate('/dashboard');
+              navigate('/vendor/dashboard');
               break;
             case 'delivery':
               navigate('/delivery-dashboard');

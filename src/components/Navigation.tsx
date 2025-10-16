@@ -60,7 +60,7 @@ export default function Navigation() {
       label: 'Shop Owner',
       color: 'bg-gradient-secondary',
       links: [
-        { path: '/dashboard', label: 'Dashboard' },
+        { path: '/vendor/dashboard', label: 'Dashboard' },
         { path: '/inventory', label: 'Inventory' },
         { path: '/analytics', label: 'Analytics' }
       ]
@@ -274,12 +274,29 @@ export default function Navigation() {
                       Role: {userRole.charAt(0).toUpperCase() + userRole.slice(1)}
                     </DropdownMenuItem>
                   )}
-                  <DropdownMenuItem onClick={() => navigate('/orders')}>
-                    Orders
+                  <DropdownMenuItem onClick={() => {
+                    if (userRole === 'customer') {
+                      navigate('/customer/profile');
+                    } else if (userRole === 'shopkeeper') {
+                      navigate('/vendor/profile');
+                    } else if (userRole === 'admin') {
+                      navigate('/admin');
+                    } else {
+                      navigate('/profile');
+                    }
+                  }}>
+                    Profile
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/loyalty')}>
-                    Rewards
-                  </DropdownMenuItem>
+                  {userRole === 'customer' && (
+                    <>
+                      <DropdownMenuItem onClick={() => navigate('/orders')}>
+                        Orders
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate('/loyalty')}>
+                        Rewards
+                      </DropdownMenuItem>
+                    </>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={signOut} className="text-destructive">
                     <LogOut className="w-4 h-4 mr-2" />
