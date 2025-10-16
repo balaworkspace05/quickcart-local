@@ -50,19 +50,18 @@ export default function Navigation() {
       color: 'bg-gradient-primary',
       links: [
         { path: '/customer/dashboard', label: 'Dashboard' },
-        { path: '/shops', label: 'Shops' },
-        { path: '/orders', label: 'Orders' },
+        { path: '/shops', label: 'Browse Shops' },
+        { path: '/orders', label: 'My Orders' },
         { path: '/customer/feedback', label: 'Feedback' }
       ]
     },
     shopkeeper: {
       icon: Store,
-      label: 'Shop Owner',
+      label: 'Vendor',
       color: 'bg-gradient-secondary',
       links: [
         { path: '/vendor/dashboard', label: 'Dashboard' },
-        { path: '/inventory', label: 'Inventory' },
-        { path: '/analytics', label: 'Analytics' }
+        { path: '/vendor/profile', label: 'Shop Profile' }
       ]
     },
     delivery: {
@@ -71,8 +70,7 @@ export default function Navigation() {
       color: 'bg-info',
       links: [
         { path: '/delivery-dashboard', label: 'Dashboard' },
-        { path: '/routes', label: 'Routes' },
-        { path: '/earnings', label: 'Earnings' }
+        { path: '/delivery/routes', label: 'My Routes' }
       ]
     }
   };
