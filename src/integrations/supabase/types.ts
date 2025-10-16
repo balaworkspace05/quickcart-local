@@ -114,6 +114,38 @@ export type Database = {
           },
         ]
       }
+      feedback_reply: {
+        Row: {
+          created_at: string
+          feedback_id: string
+          id: string
+          message: string
+          vendor_id: string
+        }
+        Insert: {
+          created_at?: string
+          feedback_id: string
+          id?: string
+          message: string
+          vendor_id: string
+        }
+        Update: {
+          created_at?: string
+          feedback_id?: string
+          id?: string
+          message?: string
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feedback_reply_feedback_id_fkey"
+            columns: ["feedback_id"]
+            isOneToOne: false
+            referencedRelation: "reviews"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           created_at: string | null
@@ -438,6 +470,33 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      vendor_tasks: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          id: string
+          status: string
+          task: string
+          vendor_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          status?: string
+          task: string
+          vendor_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          status?: string
+          task?: string
+          vendor_id?: string
         }
         Relationships: []
       }

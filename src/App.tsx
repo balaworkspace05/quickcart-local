@@ -32,6 +32,10 @@ import CustomerDashboard from "./pages/CustomerDashboard";
 import CustomerProfile from "./pages/CustomerProfile";
 import CustomerFeedback from "./pages/CustomerFeedback";
 import VendorProfile from "./pages/VendorProfile";
+import VendorInventory from "./pages/VendorInventory";
+import VendorOrders from "./pages/VendorOrders";
+import VendorFeedback from "./pages/VendorFeedback";
+import VendorWork from "./pages/VendorWork";
 
 const queryClient = new QueryClient();
 
@@ -171,6 +175,38 @@ const App = () => (
                     element={
                       <ProtectedRoute requireRole="shopkeeper">
                         <VendorDashboard />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/vendor/inventory" 
+                    element={
+                      <ProtectedRoute requireRole="shopkeeper">
+                        <VendorInventory />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/vendor/orders" 
+                    element={
+                      <ProtectedRoute requireRole="shopkeeper">
+                        <VendorOrders />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/vendor/feedback" 
+                    element={
+                      <ProtectedRoute requireRole="shopkeeper">
+                        <VendorFeedback />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/vendor/work" 
+                    element={
+                      <ProtectedRoute requireRole="shopkeeper">
+                        <VendorWork />
                       </ProtectedRoute>
                     } 
                   />
