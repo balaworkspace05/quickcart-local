@@ -26,6 +26,7 @@ import Help from "@/pages/Help";
 import Privacy from "@/pages/Privacy";
 import Terms from "@/pages/Terms";
 import NotFound from "./pages/NotFound";
+import AdminDashboard from "./pages/AdminDashboard";
 
 const queryClient = new QueryClient();
 
@@ -128,6 +129,14 @@ const App = () => (
                     } 
                   />
                   <Route path="/feedback" element={<OrderTracking />} />
+                  <Route 
+                    path="/admin" 
+                    element={
+                      <ProtectedRoute requireRole="admin">
+                        <AdminDashboard />
+                      </ProtectedRoute>
+                    } 
+                  />
                   <Route path="/about" element={<About />} />
                   <Route path="/contact" element={<Contact />} />
                   <Route path="/help" element={<Help />} />

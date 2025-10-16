@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { CartItem, Order, Product, Shop } from '@/data/mockData';
 
-export type UserRole = 'customer' | 'shopkeeper' | 'delivery';
+export type UserRole = 'customer' | 'shopkeeper' | 'delivery' | 'admin';
 
 interface AppState {
   // User & Role

@@ -267,27 +267,36 @@ export type Database = {
           avatar_url: string | null
           created_at: string
           id: string
+          location_lat: number | null
+          location_lng: number | null
           name: string
           phone: string | null
           updated_at: string
+          verified: boolean | null
         }
         Insert: {
           address?: string | null
           avatar_url?: string | null
           created_at?: string
           id: string
+          location_lat?: number | null
+          location_lng?: number | null
           name: string
           phone?: string | null
           updated_at?: string
+          verified?: boolean | null
         }
         Update: {
           address?: string | null
           avatar_url?: string | null
           created_at?: string
           id?: string
+          location_lat?: number | null
+          location_lng?: number | null
           name?: string
           phone?: string | null
           updated_at?: string
+          verified?: boolean | null
         }
         Relationships: []
       }
@@ -423,7 +432,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "customer" | "shopkeeper" | "delivery"
+      app_role: "customer" | "shopkeeper" | "delivery" | "admin"
       delivery_status: "assigned" | "picked-up" | "in-transit" | "delivered"
       order_status:
         | "pending"
@@ -559,7 +568,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["customer", "shopkeeper", "delivery"],
+      app_role: ["customer", "shopkeeper", "delivery", "admin"],
       delivery_status: ["assigned", "picked-up", "in-transit", "delivered"],
       order_status: [
         "pending",
