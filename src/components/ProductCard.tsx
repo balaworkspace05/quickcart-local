@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Minus, ShoppingCart } from 'lucide-react';
-import { Product } from '@/data/mockData';
+import { Product } from '@/hooks/useProducts';
 import { useStore } from '@/store/useStore';
 import ConfettiButton from '@/components/ConfettiButton';
 import GlassmorphicCard from '@/components/GlassmorphicCard';
@@ -38,8 +38,8 @@ export default function ProductCard({ product }: ProductCardProps) {
     }
   };
 
-  const discountPercentage = product.originalPrice 
-    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+  const discountPercentage = product.original_price 
+    ? Math.round(((product.original_price - product.price) / product.original_price) * 100)
     : 0;
 
   const cardVariants = {
@@ -77,16 +77,24 @@ export default function ProductCard({ product }: ProductCardProps) {
             whileHover={{ scale: 1.05 }}
             transition={{ type: "spring", stiffness: 400, damping: 25 }}
           >
-            <motion.span
-              className="text-5xl filter drop-shadow-lg"
-              animate={{ 
-                rotate: isAdding ? [0, -10, 10, -5, 5, 0] : 0,
-                scale: isAdding ? [1, 1.2, 1] : 1 
-              }}
-              transition={{ duration: 0.5 }}
-            >
-              {product.image}
-            </motion.span>
+            {product.image_url ? (
+              <img 
+                src={product.image_url} 
+                alt={product.name} 
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <motion.span
+                className="text-5xl filter drop-shadow-lg"
+                animate={{ 
+                  rotate: isAdding ? [0, -10, 10, -5, 5, 0] : 0,
+                  scale: isAdding ? [1, 1.2, 1] : 1 
+                }}
+                transition={{ duration: 0.5 }}
+              >
+                📦
+              </motion.span>
+            )}
           </motion.div>
           
           <AnimatePresence>
@@ -139,14 +147,14 @@ export default function ProductCard({ product }: ProductCardProps) {
             >
               ₹{product.price}
             </motion.span>
-            {product.originalPrice && (
+            {product.original_price && (
               <motion.span 
                 className="text-sm text-muted-foreground line-through"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.2 }}
               >
-                ₹{product.originalPrice}
+                ₹{product.original_price}
               </motion.span>
             )}
           </div>

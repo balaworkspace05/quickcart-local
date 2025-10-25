@@ -14,8 +14,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Plus, Edit, Trash2, AlertTriangle, CheckCircle, Upload } from 'lucide-react';
+import { Plus, Edit, Trash2, AlertTriangle, CheckCircle, Upload, Loader2, X } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useImageUpload } from '@/hooks/useImageUpload';
 
 interface Product {
   id: string;
@@ -51,7 +52,11 @@ export default function VendorInventory() {
     stock: '',
     category: '',
     unit: 'piece',
+    image_url: '',
   });
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>('');
+  const { uploadImage, uploading, uploadProgress } = useImageUpload('product-images');
 
   useEffect(() => {
     if (user) {
@@ -89,10 +94,55 @@ export default function VendorInventory() {
     }
   };
 
+  // Real-time subscription
+  useEffect(() => {
+    if (!shop?.id) return;
+
+    const channel = supabase
+      .channel('product-inventory-changes')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'products',
+        filter: `shop_id=eq.${shop.id}`
+      }, () => {
+        loadData();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [shop?.id]);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedImage(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSubmit = async () => {
     if (!shop) return;
 
     try {
+      let image_url = productForm.image_url;
+
+      // Upload new image if selected
+      if (selectedImage) {
+        const uploadedUrl = await uploadImage(selectedImage);
+        if (!uploadedUrl) {
+          toast.error('Failed to upload image');
+          return;
+        }
+        image_url = uploadedUrl;
+      }
+
       const productData = {
         shop_id: shop.id,
         name: productForm.name,
@@ -103,6 +153,7 @@ export default function VendorInventory() {
         category: productForm.category,
         unit: productForm.unit,
         is_available: true,
+        image_url,
       };
 
       if (editingProduct) {
@@ -167,7 +218,9 @@ export default function VendorInventory() {
       stock: product.stock.toString(),
       category: product.category,
       unit: product.unit || 'piece',
+      image_url: product.image_url || '',
     });
+    setImagePreview(product.image_url || '');
     setIsDialogOpen(true);
   };
 
@@ -180,8 +233,11 @@ export default function VendorInventory() {
       stock: '',
       category: '',
       unit: 'piece',
+      image_url: '',
     });
     setEditingProduct(null);
+    setSelectedImage(null);
+    setImagePreview('');
   };
 
   const getStockStatus = (stock: number) => {
@@ -222,6 +278,48 @@ export default function VendorInventory() {
                 <DialogTitle>{editingProduct ? 'Edit Product' : 'Add New Product'}</DialogTitle>
               </DialogHeader>
               <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2 col-span-2">
+                  <Label>Product Image</Label>
+                  <div className="space-y-3">
+                    {imagePreview && (
+                      <div className="relative w-full h-48 bg-muted rounded-lg overflow-hidden">
+                        <img 
+                          src={imagePreview} 
+                          alt="Preview" 
+                          className="w-full h-full object-cover"
+                        />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          className="absolute top-2 right-2"
+                          onClick={() => {
+                            setImagePreview('');
+                            setSelectedImage(null);
+                            setProductForm({ ...productForm, image_url: '' });
+                          }}
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageChange}
+                        disabled={uploading}
+                      />
+                      {uploading && (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          {uploadProgress}%
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
                 <div className="space-y-2">
                   <Label>Product Name</Label>
                   <Input
@@ -297,11 +395,18 @@ export default function VendorInventory() {
               </div>
 
               <div className="flex justify-end space-x-2 mt-4">
-                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                <Button variant="outline" onClick={() => setIsDialogOpen(false)} disabled={uploading}>
                   Cancel
                 </Button>
-                <Button onClick={handleSubmit}>
-                  {editingProduct ? 'Update' : 'Add'} Product
+                <Button onClick={handleSubmit} disabled={uploading}>
+                  {uploading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Uploading...
+                    </>
+                  ) : (
+                    `${editingProduct ? 'Update' : 'Add'} Product`
+                  )}
                 </Button>
               </div>
             </DialogContent>
@@ -327,8 +432,19 @@ export default function VendorInventory() {
                   return (
                     <TableRow key={product.id}>
                       <TableCell>
-                        <div className="font-medium">{product.name}</div>
-                        <div className="text-sm text-muted-foreground">{product.description}</div>
+                        <div className="flex items-center gap-3">
+                          {product.image_url && (
+                            <img 
+                              src={product.image_url} 
+                              alt={product.name} 
+                              className="w-12 h-12 rounded-lg object-cover"
+                            />
+                          )}
+                          <div>
+                            <div className="font-medium">{product.name}</div>
+                            <div className="text-sm text-muted-foreground">{product.description}</div>
+                          </div>
+                        </div>
                       </TableCell>
                       <TableCell>{product.category}</TableCell>
                       <TableCell>

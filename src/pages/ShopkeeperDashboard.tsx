@@ -15,14 +15,13 @@ import {
   CheckCircle,
   AlertCircle
 } from 'lucide-react';
-import { mockOrders, mockProducts } from '@/data/mockData';
 import { useStore } from '@/store/useStore';
 import OrderCard from '@/components/OrderCard';
 import { motion } from 'framer-motion';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 
 export default function ShopkeeperDashboard() {
-  const { updateOrderStatus } = useStore();
+  const { updateOrderStatus, orders } = useStore();
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   
   // Mock data for analytics
@@ -43,8 +42,8 @@ export default function ShopkeeperDashboard() {
     { name: 'Local Honey', sold: 15, revenue: 900 },
   ];
 
-  // Filter orders for this shop (mock - in real app would filter by shop ID)
-  const shopOrders = mockOrders.filter(order => order.shops.includes('1'));
+  // Filter orders for this shop (using store orders - in real app would filter by shop ID from Supabase)
+  const shopOrders = orders.filter(order => order.shops && order.shops.length > 0);
   const pendingOrders = shopOrders.filter(order => ['confirmed', 'packed'].includes(order.status));
   
   const stats = {
@@ -206,32 +205,9 @@ export default function ShopkeeperDashboard() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {mockProducts.slice(0, 5).map((product) => (
-                      <div key={product.id} className="flex items-center justify-between p-4 bg-accent rounded-lg">
-                        <div className="flex items-center space-x-4">
-                          <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center text-2xl">
-                            {product.image}
-                          </div>
-                          <div>
-                            <h4 className="font-medium">{product.name}</h4>
-                            <p className="text-sm text-muted-foreground">₹{product.price} • {product.unit}</p>
-                          </div>
-                        </div>
-                        
-                        <div className="flex items-center space-x-4">
-                          <div className="text-right">
-                            <p className="font-medium">{product.stock} units</p>
-                            <Badge variant={product.stock <= 5 ? "destructive" : "secondary"} className="text-xs">
-                              {product.stock <= 5 ? 'Low Stock' : 'In Stock'}
-                            </Badge>
-                          </div>
-                          
-                          <Button variant="outline" size="sm">
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
+                    <div className="text-center py-8 text-muted-foreground">
+                      No products available. Go to Inventory to add products.
+                    </div>
                   </div>
                 </CardContent>
               </Card>

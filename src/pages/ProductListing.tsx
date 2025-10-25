@@ -1,15 +1,17 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Search, Star, Clock, MapPin, ShoppingCart } from 'lucide-react';
-import { mockShops, mockProducts } from '@/data/mockData';
+import { ArrowLeft, Search, Star, Clock, MapPin, ShoppingCart, Loader2 } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import ProductCard from '@/components/ProductCard';
 import { motion } from 'framer-motion';
 import Recommendations from '@/components/revenue/Recommendations';
+import { useShop } from '@/hooks/useShops';
+import { useProducts } from '@/hooks/useProducts';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function ProductListing() {
   const { shopId } = useParams();
@@ -17,9 +19,41 @@ export default function ProductListing() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   
-  const shop = mockShops.find(s => s.id === shopId);
-  const shopProducts = mockProducts.filter(p => p.shopId === shopId);
+  const { data: shop, isLoading: shopLoading } = useShop(shopId || '');
+  const { data: products, isLoading: productsLoading } = useProducts(shopId);
   
+  // Real-time subscription for products
+  useEffect(() => {
+    if (!shopId) return;
+    
+    const channel = supabase
+      .channel('product-changes')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'products',
+        filter: `shop_id=eq.${shopId}`
+      }, () => {
+        // Refetch products on any change
+        window.location.reload();
+      })
+      .subscribe();
+    
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [shopId]);
+  
+  const shopProducts = products || [];
+  
+  if (shopLoading || productsLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   if (!shop) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -84,39 +118,37 @@ export default function ProductListing() {
             className="flex items-start space-x-6 mt-4"
           >
             {/* Shop Logo */}
-            <div className="w-20 h-20 bg-gradient-primary rounded-full flex items-center justify-center text-white text-3xl">
-              {shop.logo}
+            <div className="w-20 h-20 bg-gradient-primary rounded-full flex items-center justify-center text-white text-3xl overflow-hidden">
+              {shop.logo_url ? (
+                <img src={shop.logo_url} alt={shop.name} className="w-full h-full object-cover" />
+              ) : (
+                '🏪'
+              )}
             </div>
             
             {/* Shop Info */}
             <div className="flex-1">
               <div className="flex items-center space-x-3 mb-2">
                 <h1 className="text-2xl font-bold">{shop.name}</h1>
-                <Badge variant={shop.isOpen ? "default" : "secondary"}>
-                  {shop.isOpen ? 'Open' : 'Closed'}
+                <Badge variant={shop.is_open ? "default" : "secondary"}>
+                  {shop.is_open ? 'Open' : 'Closed'}
                 </Badge>
               </div>
               
               <div className="flex items-center space-x-6 text-muted-foreground">
                 <div className="flex items-center space-x-1">
                   <Star className="w-4 h-4 fill-current text-warning" />
-                  <span>{shop.rating}</span>
+                  <span>{shop.rating?.toFixed(1) || '0.0'}</span>
                 </div>
                 <div className="flex items-center space-x-1">
                   <MapPin className="w-4 h-4" />
-                  <span>{shop.distance} km away</span>
+                  <span>{shop.distance} away</span>
                 </div>
                 <div className="flex items-center space-x-1">
                   <Clock className="w-4 h-4" />
-                  <span>{shop.deliveryTime}</span>
+                  <span>{shop.delivery_time}</span>
                 </div>
               </div>
-              
-              {shop.offers && (
-                <div className="mt-3 bg-accent rounded-lg p-3 inline-block">
-                  <p className="text-sm font-medium text-accent-foreground">🏷️ {shop.offers}</p>
-                </div>
-              )}
             </div>
           </motion.div>
         </div>
@@ -233,9 +265,9 @@ export default function ProductListing() {
             <div>
               <h4 className="font-medium mb-2">Store Details</h4>
               <ul className="space-y-2 text-muted-foreground">
-                <li>📍 {shop.distance} km from your location</li>
-                <li>⭐ {shop.rating} rating from customers</li>
-                <li>🕒 Delivery in {shop.deliveryTime}</li>
+                <li>📍 {shop.distance} from your location</li>
+                <li>⭐ {shop.rating?.toFixed(1) || '0.0'} rating from customers</li>
+                <li>🕒 Delivery in {shop.delivery_time}</li>
                 <li>🏪 {shop.category.charAt(0).toUpperCase() + shop.category.slice(1)} store</li>
               </ul>
             </div>

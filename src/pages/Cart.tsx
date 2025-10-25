@@ -151,8 +151,16 @@ export default function Cart() {
                             className="flex items-center space-x-4 p-3 bg-gradient-card rounded-lg border"
                           >
                             {/* Product Image */}
-                            <div className="w-16 h-16 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-lg flex items-center justify-center text-2xl flex-shrink-0">
-                              {item.product.image}
+                            <div className="w-16 h-16 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-lg flex items-center justify-center text-2xl flex-shrink-0 overflow-hidden">
+                              {item.product.image_url ? (
+                                <img 
+                                  src={item.product.image_url} 
+                                  alt={item.product.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                '📦'
+                              )}
                             </div>
 
                             {/* Product Details */}

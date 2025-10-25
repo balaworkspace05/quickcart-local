@@ -14,7 +14,6 @@ import {
   Phone,
   MessageSquare
 } from 'lucide-react';
-import { mockOrders } from '@/data/mockData';
 import { useStore } from '@/store/useStore';
 import OrderCard from '@/components/OrderCard';
 import { motion } from 'framer-motion';
@@ -24,8 +23,8 @@ export default function OrderTracking() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   
-  // Combine mock orders with store orders for demo
-  const allOrders = [...mockOrders, ...orders];
+  // Use only store orders
+  const allOrders = orders;
   
   // Filter orders
   const filteredOrders = allOrders.filter(order => {

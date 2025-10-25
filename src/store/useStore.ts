@@ -1,5 +1,24 @@
 import { create } from 'zustand';
-import { CartItem, Order, Product, Shop } from '@/data/mockData';
+import { Product } from '@/hooks/useProducts';
+import { Shop } from '@/hooks/useShops';
+
+export interface CartItem {
+  product: Product;
+  quantity: number;
+  shopId: string;
+}
+
+export interface Order {
+  id: string;
+  customerId: string;
+  items: CartItem[];
+  totalAmount: number;
+  status: 'confirmed' | 'packed' | 'out-for-delivery' | 'delivered';
+  orderTime: string;
+  estimatedDelivery: string;
+  deliveryAddress: string;
+  shops: string[];
+}
 
 export type UserRole = 'customer' | 'shopkeeper' | 'delivery' | 'admin';
 
@@ -54,7 +73,7 @@ export const useStore = create<AppState>((set, get) => ({
       }));
     } else {
       set(state => ({
-        cartItems: [...state.cartItems, { product, quantity, shopId: product.shopId }]
+        cartItems: [...state.cartItems, { product, quantity, shopId: product.shop_id }]
       }));
     }
     

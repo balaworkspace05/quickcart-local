@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Clock, MapPin, Package, Truck, CheckCircle } from 'lucide-react';
-import { Order } from '@/data/mockData';
+import { Order } from '@/store/useStore';
 import { motion } from 'framer-motion';
 
 interface OrderCardProps {
