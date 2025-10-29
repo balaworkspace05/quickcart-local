@@ -43,15 +43,8 @@ export default function AdminDashboard() {
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
-    // Check for demo admin (INSECURE - for demo purposes only)
-    const isDemoAdmin = sessionStorage.getItem('demo_admin') === 'true';
-    
-    if (!user && !isDemoAdmin) {
-      navigate('/auth');
-      return;
-    }
-    
-    if (user && userRole !== 'admin' && !isDemoAdmin) {
+    // SECURITY: Proper role-based access control
+    if (!user || userRole !== 'admin') {
       navigate('/auth');
       return;
     }

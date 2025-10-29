@@ -130,6 +130,24 @@ export default function VendorInventory() {
   const handleSubmit = async () => {
     if (!shop) return;
 
+    // Validation
+    if (!productForm.name.trim()) {
+      toast.error('Product name is required');
+      return;
+    }
+    if (!productForm.category.trim()) {
+      toast.error('Category is required');
+      return;
+    }
+    if (!productForm.price || parseFloat(productForm.price) <= 0) {
+      toast.error('Valid price is required');
+      return;
+    }
+    if (!productForm.stock || parseInt(productForm.stock) < 0) {
+      toast.error('Valid stock quantity is required');
+      return;
+    }
+
     try {
       let image_url = productForm.image_url;
 
@@ -145,12 +163,12 @@ export default function VendorInventory() {
 
       const productData = {
         shop_id: shop.id,
-        name: productForm.name,
-        description: productForm.description,
+        name: productForm.name.trim(),
+        description: productForm.description.trim() || null,
         price: parseFloat(productForm.price),
         original_price: productForm.original_price ? parseFloat(productForm.original_price) : null,
         stock: parseInt(productForm.stock),
-        category: productForm.category,
+        category: productForm.category.trim(),
         unit: productForm.unit,
         is_available: true,
         image_url,
@@ -163,11 +181,11 @@ export default function VendorInventory() {
           .eq('id', editingProduct.id);
 
         if (error) throw error;
-        toast.success('Product updated successfully');
+        toast.success('Product updated successfully! 🎉');
       } else {
         const { error } = await supabase.from('products').insert(productData);
         if (error) throw error;
-        toast.success('Product added successfully');
+        toast.success('Product added successfully! 🎉');
       }
 
       setIsDialogOpen(false);

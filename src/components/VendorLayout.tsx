@@ -1,5 +1,5 @@
-import { ReactNode } from 'react';
-import { motion } from 'framer-motion';
+import { ReactNode, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -12,7 +12,8 @@ import {
   User,
   Bell,
   LogOut,
-  Store,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 
 interface VendorLayoutProps {
@@ -31,6 +32,7 @@ export default function VendorLayout({
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut } = useAuth();
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
 
   const navItems = [
     { path: '/vendor/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -86,14 +88,20 @@ export default function VendorLayout({
       </motion.header>
 
       <div className="flex">
-        {/* Sidebar */}
+        {/* Collapsible Sidebar with Hover Expand */}
         <motion.aside
           initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.1 }}
-          className="sticky top-16 h-[calc(100vh-4rem)] w-64 border-r bg-card/30 backdrop-blur-sm"
+          animate={{ 
+            opacity: 1, 
+            x: 0,
+            width: isSidebarExpanded ? '16rem' : '5rem'
+          }}
+          transition={{ delay: 0.1, duration: 0.3 }}
+          onMouseEnter={() => setIsSidebarExpanded(true)}
+          onMouseLeave={() => setIsSidebarExpanded(false)}
+          className="sticky top-16 h-[calc(100vh-4rem)] border-r bg-card/50 backdrop-blur-xl shadow-lg overflow-hidden group"
         >
-          <nav className="p-4 space-y-2">
+          <nav className="p-3 space-y-2">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = location.pathname === item.path;
@@ -102,18 +110,63 @@ export default function VendorLayout({
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-300 ${
+                  className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-300 relative overflow-hidden ${
                     isActive
-                      ? 'bg-primary text-primary-foreground shadow-lg'
-                      : 'hover:bg-accent hover:text-accent-foreground'
+                      ? 'bg-gradient-primary text-primary-foreground shadow-glow'
+                      : 'hover:bg-accent/50 hover:shadow-md'
                   }`}
                 >
-                  <Icon className="w-5 h-5" />
-                  <span className="font-medium">{item.label}</span>
+                  <Icon className={`w-5 h-5 flex-shrink-0 ${isActive ? 'animate-pulse' : ''}`} />
+                  <AnimatePresence>
+                    {isSidebarExpanded && (
+                      <motion.span
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -10 }}
+                        transition={{ duration: 0.2 }}
+                        className="font-medium whitespace-nowrap"
+                      >
+                        {item.label}
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                  {isActive && (
+                    <motion.div
+                      layoutId="activeTab"
+                      className="absolute inset-0 bg-gradient-primary rounded-xl -z-10"
+                      initial={false}
+                      transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                    />
+                  )}
                 </Link>
               );
             })}
           </nav>
+          
+          {/* Expand/Collapse Indicator */}
+          <div className="absolute bottom-4 right-4 text-muted-foreground">
+            <AnimatePresence mode="wait">
+              {isSidebarExpanded ? (
+                <motion.div
+                  key="expanded"
+                  initial={{ opacity: 0, rotate: -90 }}
+                  animate={{ opacity: 0.5, rotate: 0 }}
+                  exit={{ opacity: 0, rotate: 90 }}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="collapsed"
+                  initial={{ opacity: 0, rotate: 90 }}
+                  animate={{ opacity: 0.5, rotate: 0 }}
+                  exit={{ opacity: 0, rotate: -90 }}
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </motion.aside>
 
         {/* Main Content */}

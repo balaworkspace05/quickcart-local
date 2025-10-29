@@ -50,6 +50,7 @@ export default function Navigation() {
       color: 'bg-gradient-primary',
       links: [
         { path: '/customer/dashboard', label: 'Dashboard' },
+        { path: '/market', label: 'Market' },
         { path: '/shops', label: 'Shops' },
         { path: '/orders', label: 'Orders' },
         { path: '/customer/feedback', label: 'Feedback' }

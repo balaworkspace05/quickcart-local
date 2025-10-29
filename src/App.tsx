@@ -10,6 +10,7 @@ import PageTransition from "@/components/PageTransition";
 import Navigation from "@/components/Navigation";
 import AnimatedBackground from "@/components/AnimatedBackground";
 import Landing from "@/pages/Landing";
+import Market from "@/pages/Market";
 import ShopBrowser from "@/pages/ShopBrowser";
 import ProductListing from "@/pages/ProductListing";
 import OrderTracking from "@/pages/OrderTracking";
@@ -55,7 +56,8 @@ const App = () => (
                   <Route path="/" element={<Landing />} />
                   <Route path="/auth" element={<Auth />} />
                   <Route path="/auth/callback" element={<AuthCallback />} />
-                  <Route path="/shops" element={<ShopBrowser />} />
+          <Route path="/shops" element={<ShopBrowser />} />
+          <Route path="/market" element={<Market />} />
                   <Route path="/shop/:shopId" element={<ProductListing />} />
                   <Route 
                     path="/cart" 

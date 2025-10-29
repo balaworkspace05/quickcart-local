@@ -169,16 +169,8 @@ export default function Auth() {
     setLoading(true);
 
     try {
-      // SECURITY NOTE: Static admin credentials are insecure for production
-      // This is for demo purposes only - use proper auth in production
-      if (formData.email === ADMIN_USERNAME && formData.password === ADMIN_PASSWORD) {
-        // Create a mock admin session for demo
-        toast.success('Admin demo login successful!');
-        // Store admin flag temporarily (INSECURE - for demo only)
-        sessionStorage.setItem('demo_admin', 'true');
-        navigate('/admin');
-        return;
-      }
+      // SECURITY NOTE: Check for admin role in database after authentication
+      // Static credentials should be stored securely and verified server-side
 
       const { data, error } = await supabase.auth.signInWithPassword({
         email: formData.email,
