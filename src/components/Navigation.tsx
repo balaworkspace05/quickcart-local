@@ -57,12 +57,15 @@ export default function Navigation() {
     },
     shopkeeper: {
       icon: Store,
-      label: 'Shop Owner',
+      label: 'Vendor',
       color: 'bg-gradient-secondary',
       links: [
         { path: '/vendor/dashboard', label: 'Dashboard' },
-        { path: '/inventory', label: 'Inventory' },
-        { path: '/analytics', label: 'Analytics' }
+        { path: '/vendor/inventory', label: 'Inventory' },
+        { path: '/vendor/orders', label: 'Orders' },
+        { path: '/vendor/feedback', label: 'Feedback' },
+        { path: '/vendor/work', label: 'Insights' },
+        { path: '/vendor/profile', label: 'Profile' }
       ]
     },
     delivery: {
@@ -73,6 +76,14 @@ export default function Navigation() {
         { path: '/delivery-dashboard', label: 'Dashboard' },
         { path: '/routes', label: 'Routes' },
         { path: '/earnings', label: 'Earnings' }
+      ]
+    },
+    admin: {
+      icon: User,
+      label: 'Admin',
+      color: 'bg-gradient-accent',
+      links: [
+        { path: '/admin', label: 'Dashboard' }
       ]
     }
   };

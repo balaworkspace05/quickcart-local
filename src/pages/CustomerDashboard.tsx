@@ -51,6 +51,28 @@ export default function CustomerDashboard() {
 
       if (error) throw error;
       setOrders(ordersData || []);
+
+      // Set up realtime subscription for orders
+      const channel = supabase
+        .channel('customer-orders')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'orders',
+            filter: `user_id=eq.${user?.id}`
+          },
+          () => {
+            // Refetch orders when any change occurs
+            fetchDashboardData();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     } catch (error: any) {
       toast.error('Failed to load dashboard data');
     } finally {

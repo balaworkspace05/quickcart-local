@@ -169,9 +169,13 @@ export default function Auth() {
     setLoading(true);
 
     try {
-      // Check for admin credentials
+      // SECURITY NOTE: Static admin credentials are insecure for production
+      // This is for demo purposes only - use proper auth in production
       if (formData.email === ADMIN_USERNAME && formData.password === ADMIN_PASSWORD) {
-        toast.success('Admin login successful!');
+        // Create a mock admin session for demo
+        toast.success('Admin demo login successful!');
+        // Store admin flag temporarily (INSECURE - for demo only)
+        sessionStorage.setItem('demo_admin', 'true');
         navigate('/admin');
         return;
       }
@@ -215,7 +219,8 @@ export default function Auth() {
               navigate('/customer/dashboard');
           }
         } else {
-          navigate('/customer/dashboard');
+          // No role found, redirect to role selection
+          navigate('/auth/callback');
         }
         toast.success('Login successful!');
       }
