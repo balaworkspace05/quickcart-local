@@ -1,12 +1,15 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Minus, ShoppingCart } from 'lucide-react';
+import { Plus, Minus, ShoppingCart, Zap } from 'lucide-react';
 import { Product } from '@/hooks/useProducts';
 import { useStore } from '@/store/useStore';
 import ConfettiButton from '@/components/ConfettiButton';
 import GlassmorphicCard from '@/components/GlassmorphicCard';
 import { motion, AnimatePresence } from 'framer-motion';
+import CheckoutModal from './CheckoutModal';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface ProductCardProps {
   product: Product;
@@ -16,10 +19,34 @@ export default function ProductCard({ product }: ProductCardProps) {
   const { addToCart, cartItems, updateCartQuantity } = useStore();
   const [quantity, setQuantity] = useState(1);
   const [isAdding, setIsAdding] = useState(false);
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [shop, setShop] = useState<any>(null);
   
   // Find current quantity in cart
   const cartItem = cartItems.find(item => item.product.id === product.id);
   const cartQuantity = cartItem?.quantity || 0;
+
+  const handleBuyNow = async () => {
+    try {
+      const { data: shopData, error } = await supabase
+        .from('shops')
+        .select('*')
+        .eq('id', product.shop_id)
+        .single();
+
+      if (error) throw error;
+      if (!shopData) {
+        toast.error('Shop not found');
+        return;
+      }
+
+      setShop(shopData);
+      setIsCheckoutOpen(true);
+    } catch (error: any) {
+      console.error('Error fetching shop:', error);
+      toast.error('Failed to load shop details');
+    }
+  };
   
   const handleAddToCart = () => {
     setIsAdding(true);
@@ -186,7 +213,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         </div>
         
         {/* Add to Cart Section */}
-        <div className="mt-4 space-y-3">
+        <div className="mt-4 space-y-2">
           <AnimatePresence mode="wait">
             {cartQuantity > 0 ? (
               /* Already in cart - show quantity controls */
@@ -234,7 +261,7 @@ export default function ProductCard({ product }: ProductCardProps) {
                 exit={{ opacity: 0, scale: 0.9 }}
               >
                 {product.stock > 0 && (
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     <div className="flex items-center justify-between glass-card p-2 rounded-lg">
                       <motion.button
                         onClick={() => setQuantity(Math.max(1, quantity - 1))}
@@ -271,6 +298,17 @@ export default function ProductCard({ product }: ProductCardProps) {
                       <ShoppingCart className="w-4 h-4 mr-2" />
                       Add to Cart
                     </ConfettiButton>
+
+                    {/* Buy Now Button */}
+                    <motion.button
+                      onClick={handleBuyNow}
+                      className="w-full bg-gradient-to-r from-secondary to-accent text-white py-2 rounded-lg font-medium shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2"
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <Zap className="w-4 h-4" />
+                      Buy Now
+                    </motion.button>
                   </div>
                 )}
                 
@@ -283,6 +321,13 @@ export default function ProductCard({ product }: ProductCardProps) {
             )}
           </AnimatePresence>
         </div>
+
+        <CheckoutModal
+          isOpen={isCheckoutOpen}
+          onClose={() => setIsCheckoutOpen(false)}
+          product={product}
+          shop={shop}
+        />
       </GlassmorphicCard>
     </motion.div>
   );

@@ -13,6 +13,7 @@ export interface Shop {
   is_open: boolean;
   delivery_time: string;
   distance: string;
+  gpay_qr_url: string | null;
   created_at: string;
   updated_at: string;
 }

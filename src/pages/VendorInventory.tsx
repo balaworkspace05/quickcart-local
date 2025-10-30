@@ -128,23 +128,34 @@ export default function VendorInventory() {
   };
 
   const handleSubmit = async () => {
-    if (!shop) return;
+    if (!shop) {
+      toast.error('Shop information not found');
+      return;
+    }
 
-    // Validation
+    // Enhanced Validation
     if (!productForm.name.trim()) {
-      toast.error('Product name is required');
+      toast.error('❌ Product name is required');
       return;
     }
     if (!productForm.category.trim()) {
-      toast.error('Category is required');
+      toast.error('❌ Category is required');
+      return;
+    }
+    if (!productForm.description.trim()) {
+      toast.error('❌ Description is required');
       return;
     }
     if (!productForm.price || parseFloat(productForm.price) <= 0) {
-      toast.error('Valid price is required');
+      toast.error('❌ Valid price is required');
       return;
     }
     if (!productForm.stock || parseInt(productForm.stock) < 0) {
-      toast.error('Valid stock quantity is required');
+      toast.error('❌ Valid stock quantity is required');
+      return;
+    }
+    if (!selectedImage && !productForm.image_url) {
+      toast.error('❌ Product image is required');
       return;
     }
 
@@ -181,19 +192,19 @@ export default function VendorInventory() {
           .eq('id', editingProduct.id);
 
         if (error) throw error;
-        toast.success('Product updated successfully! 🎉');
+        toast.success('✅ Product updated successfully!');
       } else {
         const { error } = await supabase.from('products').insert(productData);
         if (error) throw error;
-        toast.success('Product added successfully! 🎉');
+        toast.success('✅ Product added successfully! It will appear instantly in the marketplace.');
       }
 
       setIsDialogOpen(false);
       resetForm();
-      loadData();
+      await loadData();
     } catch (error: any) {
-      toast.error(`Failed to ${editingProduct ? 'update' : 'add'} product`);
-      console.error(error);
+      console.error('Product submission error:', error);
+      toast.error(`❌ Failed to ${editingProduct ? 'update' : 'add'} product: ${error.message}`);
     }
   };
 
