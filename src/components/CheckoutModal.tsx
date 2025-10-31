@@ -23,16 +23,55 @@ export default function CheckoutModal({ isOpen, onClose, product, shop }: Checko
   const [deliveryAddress, setDeliveryAddress] = useState('');
   const [deliveryInstructions, setDeliveryInstructions] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [couponCode, setCouponCode] = useState('');
+  const [couponApplied, setCouponApplied] = useState(false);
+  const [discount, setDiscount] = useState(0);
 
   if (!product || !shop) return null;
 
-  const totalPrice = product.price * quantity;
+  const originalPrice = product.price * quantity;
+  const totalPrice = originalPrice - discount;
   const maxQuantity = product.stock;
 
   const handleQuantityChange = (delta: number) => {
     const newQuantity = quantity + delta;
     if (newQuantity >= 1 && newQuantity <= maxQuantity) {
       setQuantity(newQuantity);
+      // Recalculate discount if coupon applied
+      if (couponApplied && couponCode) {
+        handleApplyCoupon();
+      }
+    }
+  };
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) {
+      toast.error('Please enter a coupon code');
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase.rpc('apply_coupon_discount', {
+        coupon_code_param: couponCode.toUpperCase(),
+        order_amount: originalPrice,
+      });
+
+      if (error) throw error;
+
+      const result = data[0];
+      if (result.valid) {
+        setDiscount(result.discount_amount);
+        setCouponApplied(true);
+        toast.success(`Coupon applied! You saved ₹${result.discount_amount}`);
+      } else {
+        toast.error(result.message);
+        setDiscount(0);
+        setCouponApplied(false);
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to apply coupon');
+      setDiscount(0);
+      setCouponApplied(false);
     }
   };
 
@@ -50,12 +89,15 @@ export default function CheckoutModal({ isOpen, onClose, product, shop }: Checko
         return;
       }
 
-      // Create order
+      // Create order with coupon tracking
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert({
           user_id: user.id,
           total_amount: totalPrice,
+          original_amount: originalPrice,
+          discount_amount: discount,
+          coupon_code: couponApplied ? couponCode.toUpperCase() : null,
           delivery_address: deliveryAddress.trim(),
           delivery_instructions: deliveryInstructions.trim() || null,
           status: 'pending',
@@ -222,6 +264,38 @@ export default function CheckoutModal({ isOpen, onClose, product, shop }: Checko
             />
           </motion.div>
 
+          {/* Coupon Code */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.45 }}
+            className="space-y-2"
+          >
+            <Label>Coupon Code (Optional)</Label>
+            <div className="flex gap-2">
+              <Input
+                value={couponCode}
+                onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                placeholder="LOCAL-CART01"
+                disabled={couponApplied}
+                className="uppercase"
+              />
+              <Button
+                type="button"
+                variant={couponApplied ? "secondary" : "outline"}
+                onClick={handleApplyCoupon}
+                disabled={couponApplied || !couponCode.trim()}
+              >
+                {couponApplied ? 'Applied ✓' : 'Apply'}
+              </Button>
+            </div>
+            {couponApplied && (
+              <p className="text-sm text-green-600 font-medium">
+                🎉 Coupon applied! You saved ₹{discount.toFixed(2)}
+              </p>
+            )}
+          </motion.div>
+
           {/* Google Pay QR */}
           {shop.gpay_qr_url && (
             <motion.div
@@ -252,10 +326,24 @@ export default function CheckoutModal({ isOpen, onClose, product, shop }: Checko
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6 }}
-            className="flex justify-between items-center p-4 rounded-xl bg-gradient-to-r from-primary/10 to-secondary/10 border border-primary/20"
+            className="space-y-2 p-4 rounded-xl bg-gradient-to-r from-primary/10 to-secondary/10 border border-primary/20"
           >
-            <span className="text-lg font-semibold">Total Amount:</span>
-            <span className="text-3xl font-bold text-primary">₹{totalPrice.toFixed(2)}</span>
+            {discount > 0 && (
+              <>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Subtotal:</span>
+                  <span className="line-through">₹{originalPrice.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm text-green-600 font-medium">
+                  <span>Discount:</span>
+                  <span>- ₹{discount.toFixed(2)}</span>
+                </div>
+              </>
+            )}
+            <div className="flex justify-between items-center">
+              <span className="text-lg font-semibold">Total Amount:</span>
+              <span className="text-2xl font-bold text-primary">₹{totalPrice.toFixed(2)}</span>
+            </div>
           </motion.div>
 
           {/* Action Buttons */}

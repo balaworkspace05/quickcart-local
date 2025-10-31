@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 
 export interface Shop {
   id: string;
-  owner_id: string;
+  user_id: string;
   name: string;
   logo_url: string | null;
   location: string;
@@ -14,6 +14,8 @@ export interface Shop {
   delivery_time: string;
   distance: string;
   gpay_qr_url: string | null;
+  email: string | null;
+  owner_name: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -54,13 +56,13 @@ export function useCreateShop() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (shop: Omit<Shop, 'id' | 'created_at' | 'updated_at' | 'owner_id'>) => {
+    mutationFn: async (shop: Omit<Shop, 'id' | 'created_at' | 'updated_at' | 'user_id'>) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
       const { data, error } = await supabase
         .from('shops')
-        .insert({ ...shop, owner_id: user.id })
+        .insert({ ...shop, user_id: user.id })
         .select()
         .single();
 

@@ -92,7 +92,7 @@ export default function VendorInventory() {
         const { data: newShop, error: createError } = await supabase
           .from('shops')
           .insert({
-            owner_id: user?.id,
+            user_id: user?.id,
             name: profileData?.name ? `${profileData.name}'s Shop` : 'My Shop',
             location: profileData?.address || 'Location not set',
             category: 'General',
