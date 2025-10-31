@@ -41,10 +41,10 @@ export function useShop(shopId: string) {
         .from('shops')
         .select('*')
         .eq('id', shopId)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
-      return data as Shop;
+      return data as Shop | null;
     },
     enabled: !!shopId,
   });

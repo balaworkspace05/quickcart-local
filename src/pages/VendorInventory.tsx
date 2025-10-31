@@ -71,9 +71,14 @@ export default function VendorInventory() {
         .from('shops')
         .select('id, name, logo_url')
         .eq('owner_id', user?.id)
-        .single();
+        .maybeSingle();
 
-      if (shopError) throw shopError;
+      if (shopError) {
+        console.error('Error loading shop:', shopError);
+        toast.error('Failed to load shop information');
+        return;
+      }
+      
       setShop(shopData);
 
       if (shopData) {
