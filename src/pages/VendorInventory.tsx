@@ -67,7 +67,9 @@ export default function VendorInventory() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const { data: shopData, error: shopError } = await supabase
+      
+      // Fetch or create shop for vendor
+      let { data: shopData, error: shopError } = await supabase
         .from('shops')
         .select('id, name, logo_url')
         .eq('owner_id', user?.id)
@@ -77,6 +79,39 @@ export default function VendorInventory() {
         console.error('Error loading shop:', shopError);
         toast.error('Failed to load shop information');
         return;
+      }
+      
+      // If no shop exists, create one automatically
+      if (!shopData) {
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('name, address')
+          .eq('id', user?.id)
+          .maybeSingle();
+
+        const { data: newShop, error: createError } = await supabase
+          .from('shops')
+          .insert({
+            owner_id: user?.id,
+            name: profileData?.name ? `${profileData.name}'s Shop` : 'My Shop',
+            location: profileData?.address || 'Location not set',
+            category: 'General',
+            is_open: true,
+            rating: 0.0,
+            delivery_time: '20-30 mins',
+            distance: '1.5 km'
+          })
+          .select('id, name, logo_url')
+          .single();
+
+        if (createError) {
+          console.error('Error creating shop:', createError);
+          toast.error('Failed to create shop. Please try again.');
+          return;
+        }
+
+        shopData = newShop;
+        toast.success('Shop created successfully!');
       }
       
       setShop(shopData);
