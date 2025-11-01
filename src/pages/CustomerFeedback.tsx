@@ -57,7 +57,27 @@ export default function CustomerFeedback() {
       return;
     }
     fetchData();
+    setupRealtimeSubscriptions();
   }, [user, userRole, navigate]);
+
+  const setupRealtimeSubscriptions = () => {
+    // Subscribe to review changes
+    const reviewsChannel = supabase
+      .channel('customer-reviews')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'reviews',
+        filter: `user_id=eq.${user?.id}`
+      }, () => {
+        fetchReviews();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(reviewsChannel);
+    };
+  };
 
   const fetchData = async () => {
     await Promise.all([fetchReviews(), fetchDeliveredOrders()]);

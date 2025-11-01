@@ -60,20 +60,54 @@ export default function VendorDashboard() {
   useEffect(() => {
     if (user) {
       loadData();
+      setupRealtimeSubscriptions();
     }
   }, [user]);
+
+  const setupRealtimeSubscriptions = () => {
+    // Subscribe to product changes
+    const productsChannel = supabase
+      .channel('vendor-products')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'products',
+        filter: `shop_id=eq.${shop?.id}`
+      }, () => {
+        loadData();
+      })
+      .subscribe();
+
+    // Subscribe to order changes
+    const ordersChannel = supabase
+      .channel('vendor-orders')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'order_items',
+        filter: `shop_id=eq.${shop?.id}`
+      }, () => {
+        loadData();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(productsChannel);
+      supabase.removeChannel(ordersChannel);
+    };
+  };
 
   const loadData = async () => {
     try {
       setLoading(true);
-      const { data: shopData, error: shopError } = await supabase
+      const { data: shopData, error: shopError } = await (supabase as any)
         .from('shops')
         .select('*')
-        .eq('owner_id', user?.id)
-        .single();
+        .eq('user_id', user?.id)
+        .maybeSingle();
 
       if (shopError) throw shopError;
-      setShop(shopData);
+      setShop(shopData as unknown as Shop);
 
       if (shopData) {
         const { data: productsData } = await supabase

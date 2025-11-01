@@ -48,17 +48,50 @@ export default function VendorFeedback() {
   useEffect(() => {
     if (user) {
       loadData();
+      setupRealtimeSubscriptions();
     }
   }, [user]);
+
+  const setupRealtimeSubscriptions = () => {
+    // Subscribe to new reviews
+    const reviewsChannel = supabase
+      .channel('vendor-reviews')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'reviews'
+      }, () => {
+        loadData();
+      })
+      .subscribe();
+
+    // Subscribe to feedback replies
+    const repliesChannel = supabase
+      .channel('vendor-replies')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'feedback_reply',
+        filter: `vendor_id=eq.${user?.id}`
+      }, () => {
+        loadData();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(reviewsChannel);
+      supabase.removeChannel(repliesChannel);
+    };
+  };
 
   const loadData = async () => {
     try {
       setLoading(true);
-      const { data: shopData, error: shopError } = await supabase
+      const { data: shopData, error: shopError } = await (supabase as any)
         .from('shops')
         .select('id, name, logo_url')
-        .eq('owner_id', user?.id)
-        .single();
+        .eq('user_id', user?.id)
+        .maybeSingle();
 
       if (shopError) throw shopError;
       setShop(shopData);

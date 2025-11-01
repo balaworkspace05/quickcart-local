@@ -19,7 +19,7 @@ import VendorDashboard from "@/pages/VendorDashboard";
 import DeliveryDashboard from "@/pages/DeliveryDashboard";
 import LoyaltyRewards from "@/pages/LoyaltyRewards";
 import Cart from "@/pages/Cart";
-import Auth from "@/pages/Auth";
+import AuthNew from "@/pages/AuthNew";
 import AuthCallback from "@/pages/AuthCallback";
 import Profile from "@/pages/Profile";
 import About from "@/pages/About";
@@ -54,7 +54,7 @@ const App = () => (
               <PageTransition>
                 <Routes>
                   <Route path="/" element={<Landing />} />
-                  <Route path="/auth" element={<Auth />} />
+                  <Route path="/auth" element={<AuthNew />} />
                   <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/shops" element={<ShopBrowser />} />
           <Route path="/market" element={<Market />} />
