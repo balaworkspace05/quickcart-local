@@ -219,7 +219,7 @@ export default function AuthNew() {
             rating: 0.0,
             delivery_time: '20-30 mins',
             distance: '1.5 km',
-          });
+          } as any);
 
         if (shopError) {
           console.error('Error creating shop:', shopError);

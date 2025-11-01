@@ -100,7 +100,7 @@ export default function VendorInventory() {
             rating: 0.0,
             delivery_time: '20-30 mins',
             distance: '1.5 km'
-          })
+          } as any)
           .select('id, name, logo_url')
           .single();
 

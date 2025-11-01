@@ -25,7 +25,7 @@ export async function validateAndApplyCoupon(
   orderAmount: number
 ): Promise<CouponValidationResult> {
   try {
-    const { data, error } = await supabase.rpc('apply_coupon_discount', {
+    const { data, error } = await (supabase.rpc as any)('apply_coupon_discount', {
       coupon_code_param: couponCode.toUpperCase(),
       order_amount: orderAmount,
     });
@@ -54,14 +54,14 @@ export async function validateAndApplyCoupon(
 export async function getCoupon(code: string): Promise<Coupon | null> {
   try {
     const { data, error } = await supabase
-      .from('coupons')
+      .from('coupons' as any)
       .select('*')
       .eq('code', code.toUpperCase())
       .eq('active', true)
       .maybeSingle();
 
     if (error) throw error;
-    return data;
+    return data as unknown as Coupon | null;
   } catch (error) {
     return null;
   }

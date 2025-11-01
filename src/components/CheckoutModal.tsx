@@ -51,7 +51,7 @@ export default function CheckoutModal({ isOpen, onClose, product, shop }: Checko
     }
 
     try {
-      const { data, error } = await supabase.rpc('apply_coupon_discount', {
+      const { data, error } = await (supabase.rpc as any)('apply_coupon_discount', {
         coupon_code_param: couponCode.toUpperCase(),
         order_amount: originalPrice,
       });

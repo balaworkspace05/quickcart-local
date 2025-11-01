@@ -9,10 +9,10 @@ export interface Shop {
   logo_url: string | null;
   location: string;
   category: string;
-  rating: number;
-  is_open: boolean;
-  delivery_time: string;
-  distance: string;
+  rating: number | null;
+  is_open: boolean | null;
+  delivery_time: string | null;
+  distance: string | null;
   gpay_qr_url: string | null;
   email: string | null;
   owner_name: string | null;
@@ -30,7 +30,7 @@ export function useShops() {
         .order('rating', { ascending: false });
 
       if (error) throw error;
-      return data as Shop[];
+      return data as unknown as Shop[];
     },
   });
 }
@@ -46,7 +46,7 @@ export function useShop(shopId: string) {
         .maybeSingle();
 
       if (error) throw error;
-      return data as Shop | null;
+      return data as unknown as Shop | null;
     },
     enabled: !!shopId,
   });
@@ -62,12 +62,12 @@ export function useCreateShop() {
 
       const { data, error } = await supabase
         .from('shops')
-        .insert({ ...shop, user_id: user.id })
+        .insert({ ...shop, user_id: user.id } as any)
         .select()
         .single();
 
       if (error) throw error;
-      return data;
+      return data as unknown as Shop;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['shops'] });
