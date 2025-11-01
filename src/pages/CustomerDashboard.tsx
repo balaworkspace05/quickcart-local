@@ -32,16 +32,16 @@ export default function CustomerDashboard() {
 
   const fetchDashboardData = async () => {
     try {
-      // Fetch profile
+      // Fetch profile (use maybeSingle to handle no profile gracefully)
       const { data: profileData } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', user?.id)
-        .single();
+        .maybeSingle();
       
       setProfile(profileData);
 
-      // Fetch orders
+      // Fetch orders - safe to return empty array if no orders exist
       const { data: ordersData, error } = await supabase
         .from('orders')
         .select('*')
@@ -49,7 +49,13 @@ export default function CustomerDashboard() {
         .order('created_at', { ascending: false })
         .limit(5);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Orders error:', error);
+        // Don't throw on "no rows" - just set empty
+        if (error.code !== 'PGRST116') {
+          throw error;
+        }
+      }
       setOrders(ordersData || []);
 
       // Set up realtime subscription for orders
