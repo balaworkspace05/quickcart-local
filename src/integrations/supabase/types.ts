@@ -325,6 +325,7 @@ export type Database = {
           address: string | null
           avatar_url: string | null
           created_at: string
+          gpay_qr_url: string | null
           id: string
           location_lat: number | null
           location_lng: number | null
@@ -337,6 +338,7 @@ export type Database = {
           address?: string | null
           avatar_url?: string | null
           created_at?: string
+          gpay_qr_url?: string | null
           id: string
           location_lat?: number | null
           location_lng?: number | null
@@ -349,6 +351,7 @@ export type Database = {
           address?: string | null
           avatar_url?: string | null
           created_at?: string
+          gpay_qr_url?: string | null
           id?: string
           location_lat?: number | null
           location_lng?: number | null
@@ -413,7 +416,6 @@ export type Database = {
           created_at: string
           delivery_time: string | null
           distance: string | null
-          gpay_qr_url: string | null
           id: string
           is_open: boolean | null
           location: string
@@ -428,7 +430,6 @@ export type Database = {
           created_at?: string
           delivery_time?: string | null
           distance?: string | null
-          gpay_qr_url?: string | null
           id?: string
           is_open?: boolean | null
           location: string
@@ -443,7 +444,6 @@ export type Database = {
           created_at?: string
           delivery_time?: string | null
           distance?: string | null
-          gpay_qr_url?: string | null
           id?: string
           is_open?: boolean | null
           location?: string

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,52 @@ import { Shop } from '@/hooks/useShops';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Minus, Plus, QrCode, Store, MapPin, Package } from 'lucide-react';
+
+// Component to fetch and display GPay QR from vendor's profile
+function GPayQRSection({ shopOwnerId }: { shopOwnerId: string }) {
+  const [gpayQrUrl, setGpayQrUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchGPayQR = async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('gpay_qr_url')
+        .eq('id', shopOwnerId)
+        .maybeSingle();
+
+      if (!error && data?.gpay_qr_url) {
+        setGpayQrUrl(data.gpay_qr_url);
+      }
+    };
+    fetchGPayQR();
+  }, [shopOwnerId]);
+
+  if (!gpayQrUrl) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.5 }}
+      className="p-6 rounded-xl bg-gradient-to-br from-primary/10 to-secondary/10 border-2 border-primary/20"
+    >
+      <div className="flex items-center gap-2 mb-4">
+        <QrCode className="w-5 h-5 text-primary" />
+        <h4 className="font-semibold">Scan & Pay using Google Pay</h4>
+      </div>
+      <div className="flex justify-center">
+        <img
+          src={gpayQrUrl}
+          alt="Google Pay QR"
+          className="w-48 h-48 rounded-lg shadow-lg"
+        />
+      </div>
+      <p className="text-sm text-muted-foreground text-center mt-4">
+        Scan this QR code with your Google Pay app to complete payment
+      </p>
+    </motion.div>
+  );
+}
 
 interface CheckoutModalProps {
   isOpen: boolean;
@@ -296,30 +342,8 @@ export default function CheckoutModal({ isOpen, onClose, product, shop }: Checko
             )}
           </motion.div>
 
-          {/* Google Pay QR */}
-          {shop.gpay_qr_url && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
-              className="p-6 rounded-xl bg-gradient-to-br from-primary/10 to-secondary/10 border-2 border-primary/20"
-            >
-              <div className="flex items-center gap-2 mb-4">
-                <QrCode className="w-5 h-5 text-primary" />
-                <h4 className="font-semibold">Scan & Pay using Google Pay</h4>
-              </div>
-              <div className="flex justify-center">
-                <img
-                  src={shop.gpay_qr_url}
-                  alt="Google Pay QR"
-                  className="w-48 h-48 rounded-lg shadow-lg"
-                />
-              </div>
-              <p className="text-sm text-muted-foreground text-center mt-4">
-                Scan this QR code with your Google Pay app to complete payment
-              </p>
-            </motion.div>
-          )}
+          {/* Google Pay QR - Now fetched from vendor profile */}
+          <GPayQRSection shopOwnerId={shop.owner_id} />
 
           {/* Total */}
           <motion.div
