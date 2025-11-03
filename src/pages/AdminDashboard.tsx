@@ -22,11 +22,11 @@ interface User {
   email?: string;
 }
 
-interface Shop {
+interface Vendor {
   id: string;
-  name: string;
-  owner_id: string;
-  category: string;
+  shop_name: string;
+  user_id: string;
+  owner_name: string | null;
   created_at: string;
 }
 
@@ -35,7 +35,7 @@ export default function AdminDashboard() {
   const navigate = useNavigate();
   const [customers, setCustomers] = useState<User[]>([]);
   const [vendors, setVendors] = useState<User[]>([]);
-  const [shops, setShops] = useState<Shop[]>([]);
+  const [vendorShops, setVendorShops] = useState<Vendor[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
@@ -79,10 +79,10 @@ export default function AdminDashboard() {
       setCustomers(enrichedProfiles.filter(p => customerIds.includes(p.id)));
       setVendors(enrichedProfiles.filter(p => vendorIds.includes(p.id)));
 
-      // Fetch shops
-      const { data: shopsData } = await supabase.from('shops').select('*');
-      if (shopsData) {
-        setShops(shopsData);
+      // Fetch vendor shops
+      const { data: vendorsData } = await supabase.from('vendors').select('*');
+      if (vendorsData) {
+        setVendorShops(vendorsData);
       }
 
       // Fetch orders
@@ -120,9 +120,9 @@ export default function AdminDashboard() {
       const { error } = await supabase
         .from('notifications')
         .insert({
-          user_id: selectedUser,
+          receiver_id: selectedUser,
           message: noteMessage,
-          sent_by: 'Admin',
+          sender_role: 'Admin',
         });
 
       if (error) throw error;
@@ -139,7 +139,7 @@ export default function AdminDashboard() {
 
   const stats = [
     { icon: Users, label: 'Total Users', value: customers.length + vendors.length, color: 'text-primary' },
-    { icon: Store, label: 'Total Shops', value: shops.length, color: 'text-secondary' },
+    { icon: Store, label: 'Total Shops', value: vendorShops.length, color: 'text-secondary' },
     { icon: Package, label: 'Total Orders', value: orders.length, color: 'text-accent' },
     { icon: TrendingUp, label: 'Revenue', value: `₹${totalRevenue.toFixed(2)}`, color: 'text-primary' },
   ];

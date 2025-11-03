@@ -8,22 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import ProductCard from '@/components/ProductCard';
 import { Search, Filter, Package } from 'lucide-react';
 import { Card } from '@/components/ui/card';
-
-interface Product {
-  id: string;
-  name: string;
-  description: string | null;
-  price: number;
-  original_price: number | null;
-  stock: number;
-  category: string;
-  image_url: string | null;
-  is_available: boolean;
-  unit: string | null;
-  shop_id: string;
-  created_at: string;
-  updated_at: string;
-}
+import { Product } from '@/hooks/useProducts';
 
 export default function Market() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -43,7 +28,7 @@ export default function Market() {
       const { data, error } = await supabase
         .from('products')
         .select('*')
-        .eq('is_available', true)
+        .eq('in_stock', true)
         .gt('stock', 0)
         .order('created_at', { ascending: false });
 
@@ -64,14 +49,18 @@ export default function Market() {
 
   const setupRealtimeSubscription = () => {
     const channel = supabase
-      .channel('market-products')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'products'
-      }, () => {
-        fetchProducts();
-      })
+      .channel('products-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'products'
+        },
+        () => {
+          fetchProducts();
+        }
+      )
       .subscribe();
 
     return () => {
@@ -79,6 +68,7 @@ export default function Market() {
     };
   };
 
+  // Filter products based on search and category
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          product.description?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -87,64 +77,70 @@ export default function Market() {
   });
 
   return (
-    <div className="min-h-screen bg-background pt-20 pb-12">
-      <div className="container mx-auto px-4">
+    <div className="min-h-screen bg-gradient-radial from-background via-background to-primary/5 p-6 pt-24">
+      <div className="max-w-7xl mx-auto">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
+          className="mb-8 text-center"
         >
-          <h1 className="text-4xl md:text-5xl font-bold mb-3 bg-gradient-primary bg-clip-text text-transparent">
-            Live Marketplace
+          <h1 className="text-5xl font-bold bg-gradient-primary bg-clip-text text-transparent mb-4">
+            Fresh Market
           </h1>
-          <p className="text-lg text-muted-foreground">
-            Fresh products from local vendors, updated in real-time
+          <p className="text-xl text-muted-foreground">
+            Discover the best products from local vendors
           </p>
         </motion.div>
 
-        {/* Filters */}
+        {/* Search and Filters */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="mb-8 grid md:grid-cols-2 gap-4"
+          className="mb-8 space-y-4"
         >
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder="Search products..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 glass-card border-primary/20 h-12"
-            />
-          </div>
+          <Card className="p-4 glass-card border-primary/20">
+            <div className="flex flex-col md:flex-row gap-4">
+              {/* Search */}
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
+                <Input
+                  type="text"
+                  placeholder="Search products..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 bg-background/50 border-primary/20 focus:border-primary/40"
+                />
+              </div>
 
-          <div className="relative">
-            <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground z-10" />
-            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger className="pl-10 glass-card border-primary/20 h-12">
-                <SelectValue placeholder="All Categories" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
-                {categories.map((category) => (
-                  <SelectItem key={category} value={category}>
-                    {category}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+              {/* Category Filter */}
+              <div className="md:w-64">
+                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                  <SelectTrigger className="bg-background/50 border-primary/20">
+                    <Filter className="w-4 h-4 mr-2" />
+                    <SelectValue placeholder="Category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Categories</SelectItem>
+                    {categories.map((category) => (
+                      <SelectItem key={category} value={category}>
+                        {category}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </Card>
         </motion.div>
 
         {/* Products Grid */}
         {loading ? (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {[...Array(8)].map((_, i) => (
-              <Card key={i} className="p-4 glass-card">
-                <Skeleton className="w-full h-48 mb-4 rounded-lg" />
+            {[...Array(8)].map((_, index) => (
+              <Card key={index} className="p-4 glass-card">
+                <Skeleton className="w-full h-32 mb-4" />
                 <Skeleton className="w-3/4 h-6 mb-2" />
                 <Skeleton className="w-1/2 h-4 mb-4" />
                 <Skeleton className="w-full h-10" />

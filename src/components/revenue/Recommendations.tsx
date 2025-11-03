@@ -31,14 +31,13 @@ export default function Recommendations({ productCategory = 'bread' }: Recommend
       price: product.price,
       image_url: product.image,
       category: product.category,
-      shop_id: 'shop-1',
+      vendor_id: 'vendor-1',
       stock: 100,
       unit: 'piece',
       description: product.name,
       original_price: null,
-      is_available: true,
+      in_stock: true,
       created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
     }, 1);
     toast.success(`${product.name} added to cart!`);
   };

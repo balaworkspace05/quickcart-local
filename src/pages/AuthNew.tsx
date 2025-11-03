@@ -202,28 +202,33 @@ export default function AuthNew() {
       if (error) throw error;
 
       if (data.user && role === 'vendor') {
-        // Upload GPay QR and create shop
-        const gpayQrUrl = await uploadGpayQr(data.user.id);
+        // Get the profile we just created
+        const { data: newProfile } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('user_id', data.user.id)
+          .single();
 
-        const { error: shopError } = await supabase
-          .from('shops')
-          .insert({
-            user_id: data.user.id,
-            name: formData.shopName,
-            owner_name: formData.ownerName,
-            email: formData.email,
-            location: formData.shopAddress,
-            category: 'General',
-            gpay_qr_url: gpayQrUrl,
-            is_open: true,
-            rating: 0.0,
-            delivery_time: '20-30 mins',
-            distance: '1.5 km',
-          } as any);
+        if (newProfile) {
+          // Upload GPay QR and create shop
+          const gpayQrUrl = await uploadGpayQr(data.user.id);
 
-        if (shopError) {
-          console.error('Error creating shop:', shopError);
-          toast.warning('Account created but shop setup incomplete. Please complete your profile.');
+          const { error: vendorError } = await supabase
+            .from('vendors')
+            .insert({
+              user_id: newProfile.id,
+              shop_name: formData.shopName,
+              owner_name: formData.ownerName,
+              email: formData.email,
+              address: formData.shopAddress,
+              phone: formData.phone,
+              gpay_qr_url: gpayQrUrl,
+            });
+
+          if (vendorError) {
+            console.error('Error creating vendor:', vendorError);
+            toast.warning('Account created but shop setup incomplete. Please complete your profile.');
+          }
         }
       }
 

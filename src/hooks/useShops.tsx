@@ -4,17 +4,15 @@ import { toast } from 'sonner';
 
 export interface Shop {
   id: string;
-  owner_id: string;
-  name: string;
+  user_id: string;
+  shop_name: string;
+  owner_name: string | null;
+  email: string | null;
+  phone: string | null;
+  address: string | null;
   logo_url: string | null;
-  location: string;
-  category: string;
-  rating: number | null;
-  is_open: boolean | null;
-  delivery_time: string | null;
-  distance: string | null;
+  gpay_qr_url: string | null;
   created_at: string;
-  updated_at: string;
 }
 
 export function useShops() {
@@ -22,9 +20,9 @@ export function useShops() {
     queryKey: ['shops'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('shops')
+        .from('vendors')
         .select('*')
-        .order('rating', { ascending: false });
+        .order('shop_name', { ascending: true });
 
       if (error) throw error;
       return data as unknown as Shop[];
@@ -37,7 +35,7 @@ export function useShop(shopId: string) {
     queryKey: ['shop', shopId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('shops')
+        .from('vendors')
         .select('*')
         .eq('id', shopId)
         .maybeSingle();
@@ -53,13 +51,22 @@ export function useCreateShop() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (shop: Omit<Shop, 'id' | 'created_at' | 'updated_at' | 'owner_id'>) => {
+    mutationFn: async (shop: Omit<Shop, 'id' | 'created_at' | 'user_id'>) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
+      // Get profile id
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!profile) throw new Error('Profile not found');
+
       const { data, error } = await supabase
-        .from('shops')
-        .insert({ ...shop, owner_id: user.id } as any)
+        .from('vendors')
+        .insert({ ...shop, user_id: profile.id } as any)
         .select()
         .single();
 
@@ -82,7 +89,7 @@ export function useUpdateShop() {
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Shop> & { id: string }) => {
       const { data, error } = await supabase
-        .from('shops')
+        .from('vendors')
         .update(updates)
         .eq('id', id)
         .select()

@@ -244,11 +244,11 @@ export default function CheckoutModal({ isOpen, onClose, product, shop }: Checko
           >
             <div className="flex items-center gap-3 mb-2">
               <Store className="w-5 h-5 text-secondary" />
-              <h4 className="font-semibold">{shop.name}</h4>
+              <h4 className="font-semibold">{shop.shop_name}</h4>
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <MapPin className="w-4 h-4" />
-              <span>{shop.location}</span>
+              <span>{shop.address}</span>
             </div>
           </motion.div>
 
@@ -350,7 +350,7 @@ export default function CheckoutModal({ isOpen, onClose, product, shop }: Checko
           </motion.div>
 
           {/* Google Pay QR - Now fetched from vendor profile */}
-          <GPayQRSection shopOwnerId={shop.owner_id} />
+          <GPayQRSection shopOwnerId={shop.user_id} />
 
           {/* Total */}
           <motion.div
