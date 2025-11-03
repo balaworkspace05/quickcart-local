@@ -57,8 +57,18 @@ export default function VendorDashboard() {
     activeProducts: 0,
   });
 
+  // Check for demo user
+  const getDemoUser = () => {
+    const demoUserData = localStorage.getItem('demo_user');
+    if (demoUserData) {
+      return JSON.parse(demoUserData);
+    }
+    return null;
+  };
+
   useEffect(() => {
-    if (user) {
+    const demoUser = getDemoUser();
+    if (user || demoUser) {
       loadData();
       setupRealtimeSubscriptions();
     }
@@ -103,19 +113,29 @@ export default function VendorDashboard() {
     try {
       setLoading(true);
       
-      // Get profile id from user
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('user_id', user?.id)
-        .single();
+      // Get profile id from user or demo user
+      const demoUser = getDemoUser();
+      let profileId = null;
 
-      if (!profile) return;
+      if (demoUser) {
+        // Use demo user profile
+        profileId = demoUser.profile.id;
+      } else if (user) {
+        // Get profile id from authenticated user
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('user_id', user.id)
+          .single();
+        profileId = profile?.id;
+      }
+
+      if (!profileId) return;
 
       const { data: shopData, error: shopError } = await supabase
         .from('vendors')
         .select('id, shop_name, logo_url')
-        .eq('user_id', profile.id)
+        .eq('user_id', profileId)
         .maybeSingle();
 
       if (shopError) throw shopError;
@@ -161,7 +181,7 @@ export default function VendorDashboard() {
         const { data: notificationsData } = await supabase
           .from('notifications')
           .select('*')
-          .eq('receiver_id', profile.id)
+          .eq('receiver_id', profileId)
           .limit(5);
 
         setNotifications(notificationsData || []);

@@ -246,6 +246,44 @@ export default function AuthNew() {
     setLoading(true);
 
     try {
+      // Check for demo hardcoded credentials
+      const demoUsers = {
+        'balajij.bsc23@rvu.edu.in': { password: '123456', role: 'customer', redirectTo: '/customer/dashboard' },
+        'malibalaji1050@gmail.com': { password: '123456', role: 'vendor', redirectTo: '/vendor/dashboard' }
+      };
+
+      const demoUser = demoUsers[formData.email as keyof typeof demoUsers];
+      
+      if (demoUser && formData.password === demoUser.password) {
+        // For demo users, get profile from database and redirect
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('email', formData.email)
+          .single();
+        
+        if (profile) {
+          // Store demo session in localStorage
+          localStorage.setItem('demo_user', JSON.stringify({
+            email: formData.email,
+            role: demoUser.role,
+            profile: profile
+          }));
+          
+          toast.success(`Logged in as ${demoUser.role}!`);
+          setLoading(false);
+          
+          // Redirect based on role
+          navigate(demoUser.redirectTo);
+          return;
+        } else {
+          toast.error('Demo user profile not found in database');
+          setLoading(false);
+          return;
+        }
+      }
+
+      // Regular Supabase auth for other users
       const { data, error } = await supabase.auth.signInWithPassword({
         email: formData.email,
         password: formData.password,

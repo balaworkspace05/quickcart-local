@@ -58,8 +58,18 @@ export default function VendorInventory() {
   const [imagePreview, setImagePreview] = useState<string>('');
   const { uploadImage, uploading, uploadProgress } = useImageUpload('product-images');
 
+  // Check for demo user
+  const getDemoUser = () => {
+    const demoUserData = localStorage.getItem('demo_user');
+    if (demoUserData) {
+      return JSON.parse(demoUserData);
+    }
+    return null;
+  };
+
   useEffect(() => {
-    if (user) {
+    const demoUser = getDemoUser();
+    if (user || demoUser) {
       loadData();
     }
   }, [user]);
@@ -68,11 +78,30 @@ export default function VendorInventory() {
     try {
       setLoading(true);
       
+      // Get profile id from user or demo user
+      const demoUser = getDemoUser();
+      let profileId = null;
+
+      if (demoUser) {
+        // Use demo user profile
+        profileId = demoUser.profile.id;
+      } else if (user) {
+        // Get profile id from authenticated user
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('user_id', user.id)
+          .single();
+        profileId = profile?.id;
+      }
+
+      if (!profileId) return;
+      
       // Fetch or create shop for vendor
       let { data: shopData, error: shopError } = await supabase
         .from('vendors')
         .select('id, shop_name, logo_url')
-        .eq('user_id', user?.id)
+        .eq('user_id', profileId)
         .maybeSingle();
 
       if (shopError) {
@@ -82,17 +111,17 @@ export default function VendorInventory() {
       }
       
       // If no shop exists, create one automatically
-      if (!shopData) {
+      if (!shopData && profileId) {
         const { data: profileData } = await supabase
           .from('profiles')
           .select('name, address')
-          .eq('id', user?.id)
+          .eq('id', profileId)
           .maybeSingle();
 
         const { data: newShop, error: createError } = await supabase
           .from('vendors')
           .insert({
-            user_id: user?.id,
+            user_id: profileId,
             shop_name: profileData?.name ? `${profileData.name}'s Shop` : 'My Shop',
             address: profileData?.address || 'Location not set',
             owner_name: profileData?.name || 'Owner'
