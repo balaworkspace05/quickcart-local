@@ -4,39 +4,25 @@ import { toast } from 'sonner';
 
 export type OrderStatus = 'pending' | 'confirmed' | 'packed' | 'out-for-delivery' | 'delivered' | 'cancelled';
 
-export interface OrderItem {
-  id: string;
-  order_id: string;
-  product_id: string;
-  shop_id: string;
-  quantity: number;
-  price: number;
-  created_at: string;
-}
-
 export interface Order {
   id: string;
-  user_id: string;
-  status: OrderStatus;
-  total_amount: number;
-  delivery_address: string;
-  delivery_instructions: string | null;
-  payment_status: string;
-  payment_intent_id: string | null;
+  customer_id: string;
+  vendor_id: string | null;
+  product_id: string | null;
+  quantity: number;
+  total_price: number;
+  status: string;
+  payment_mode: string;
   created_at: string;
-  updated_at: string;
 }
 
 export interface CreateOrderInput {
-  items: Array<{
-    product_id: string;
-    shop_id: string;
-    quantity: number;
-    price: number;
-  }>;
-  total_amount: number;
-  delivery_address: string;
-  delivery_instructions?: string;
+  customer_id: string;
+  vendor_id: string;
+  product_id: string;
+  quantity: number;
+  total_price: number;
+  payment_mode?: string;
 }
 
 export function useOrders() {
@@ -46,10 +32,19 @@ export function useOrders() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
+      // Get profile id from user
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!profile) throw new Error('Profile not found');
+
       const { data, error } = await supabase
         .from('orders')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('customer_id', profile.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -64,10 +59,7 @@ export function useOrder(orderId: string) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('orders')
-        .select(`
-          *,
-          order_items (*)
-        `)
+        .select('*')
         .eq('id', orderId)
         .single();
 
@@ -83,37 +75,21 @@ export function useCreateOrder() {
 
   return useMutation({
     mutationFn: async (orderInput: CreateOrderInput) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
-
-      // Create order
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert({
-          user_id: user.id,
-          total_amount: orderInput.total_amount,
-          delivery_address: orderInput.delivery_address,
-          delivery_instructions: orderInput.delivery_instructions,
+          customer_id: orderInput.customer_id,
+          vendor_id: orderInput.vendor_id,
+          product_id: orderInput.product_id,
+          quantity: orderInput.quantity,
+          total_price: orderInput.total_price,
+          payment_mode: orderInput.payment_mode || 'cod',
           status: 'pending',
-          payment_status: 'pending',
         })
         .select()
         .single();
 
       if (orderError) throw orderError;
-
-      // Create order items
-      const orderItems = orderInput.items.map(item => ({
-        ...item,
-        order_id: order.id,
-      }));
-
-      const { error: itemsError } = await supabase
-        .from('order_items')
-        .insert(orderItems);
-
-      if (itemsError) throw itemsError;
-
       return order;
     },
     onSuccess: () => {

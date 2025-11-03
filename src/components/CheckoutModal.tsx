@@ -135,37 +135,44 @@ export default function CheckoutModal({ isOpen, onClose, product, shop }: Checko
         return;
       }
 
-      // Create order with coupon tracking
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .insert({
-          user_id: user.id,
-          total_amount: totalPrice,
-          original_amount: originalPrice,
-          discount_amount: discount,
-          coupon_code: couponApplied ? couponCode.toUpperCase() : null,
-          delivery_address: deliveryAddress.trim(),
-          delivery_instructions: deliveryInstructions.trim() || null,
-          status: 'pending',
-          payment_status: 'pending'
-        })
-        .select()
+      // Get profile id from user
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', user.id)
         .single();
 
-      if (orderError) throw orderError;
+      if (!profile) {
+        toast.error('Profile not found');
+        return;
+      }
 
-      // Create order item
-      const { error: itemError } = await supabase
-        .from('order_items')
+      // Get vendor from product
+      const { data: productData } = await supabase
+        .from('products')
+        .select('vendor_id')
+        .eq('id', product.id)
+        .single();
+
+      if (!productData) {
+        toast.error('Product not found');
+        return;
+      }
+
+      // Create order
+      const { error: orderError } = await supabase
+        .from('orders')
         .insert({
-          order_id: order.id,
+          customer_id: profile.id,
+          vendor_id: productData.vendor_id,
           product_id: product.id,
-          shop_id: shop.id,
           quantity,
-          price: product.price
+          total_price: totalPrice,
+          payment_mode: 'cod',
+          status: 'pending',
         });
 
-      if (itemError) throw itemError;
+      if (orderError) throw orderError;
 
       // Update product stock
       const { error: stockError } = await supabase
