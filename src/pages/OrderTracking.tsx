@@ -38,8 +38,18 @@ export default function OrderTracking() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
 
+  // Check for demo user
+  const getDemoUser = () => {
+    const demoUserData = localStorage.getItem('demo_user');
+    if (demoUserData) {
+      return JSON.parse(demoUserData);
+    }
+    return null;
+  };
+
   useEffect(() => {
-    if (user) {
+    const demoUser = getDemoUser();
+    if (user || demoUser) {
       fetchOrders();
       setupRealtimeSubscription();
     }
@@ -47,14 +57,27 @@ export default function OrderTracking() {
 
   const fetchOrders = async () => {
     try {
-      // Get profile id from user
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('user_id', user?.id)
-        .single();
+      // Get profile id from user or demo user
+      const demoUser = getDemoUser();
+      let profileId = null;
 
-      if (!profile) return;
+      if (demoUser) {
+        // Use demo user profile
+        profileId = demoUser.profile.id;
+      } else if (user) {
+        // Get profile id from authenticated user
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('user_id', user.id)
+          .single();
+        profileId = profile?.id;
+      }
+
+      if (!profileId) {
+        setLoading(false);
+        return;
+      }
 
       const { data, error } = await supabase
         .from('orders')
@@ -64,7 +87,7 @@ export default function OrderTracking() {
             name
           )
         `)
-        .eq('customer_id', profile.id)
+        .eq('customer_id', profileId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
