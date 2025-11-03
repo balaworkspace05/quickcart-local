@@ -20,7 +20,7 @@ import DeliveryDashboard from "@/pages/DeliveryDashboard";
 import LoyaltyRewards from "@/pages/LoyaltyRewards";
 import Cart from "@/pages/Cart";
 import AuthNew from "@/pages/AuthNew";
-import AuthCallback from "@/pages/AuthCallback";
+
 import Profile from "@/pages/Profile";
 import About from "@/pages/About";
 import Contact from "@/pages/Contact";
@@ -55,7 +55,6 @@ const App = () => (
                 <Routes>
                   <Route path="/" element={<Landing />} />
                   <Route path="/auth" element={<AuthNew />} />
-                  <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/shops" element={<ShopBrowser />} />
           <Route path="/market" element={<Market />} />
                   <Route path="/shop/:shopId" element={<ProductListing />} />

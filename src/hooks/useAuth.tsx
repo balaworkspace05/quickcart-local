@@ -73,7 +73,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithMagicLink = async (email: string) => {
     try {
-      const redirectUrl = `${window.location.origin}/auth/callback`;
+      const redirectUrl = `${window.location.origin}/`;
       
       const { error } = await supabase.auth.signInWithOtp({
         email,

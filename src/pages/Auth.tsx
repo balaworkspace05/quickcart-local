@@ -148,7 +148,7 @@ export default function Auth() {
         email: formData.email,
         password: formData.password,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          emailRedirectTo: `${window.location.origin}/auth?verified=true`,
           data: metadata,
         },
       });
@@ -194,6 +194,7 @@ export default function Auth() {
           .single();
 
         if (roleData) {
+          toast.success('Login successful!');
           switch (roleData.role) {
             case 'customer':
               navigate('/customer/dashboard');
@@ -211,10 +212,9 @@ export default function Auth() {
               navigate('/customer/dashboard');
           }
         } else {
-          // No role found, redirect to role selection
-          navigate('/auth/callback');
+          toast.error('No role assigned. Please contact support.');
+          await supabase.auth.signOut();
         }
-        toast.success('Login successful!');
       }
     } catch (error: any) {
       // Error already handled
