@@ -54,19 +54,18 @@ export default function AdminDashboard() {
 
   const fetchAllData = async () => {
     try {
-      // Fetch all users with their roles
+      // Fetch all users with their roles from profiles
       const { data: profilesData } = await supabase.from('profiles').select('*');
-      const { data: rolesData } = await supabase.from('user_roles').select('*');
       
-      if (!profilesData || !rolesData) {
+      if (!profilesData) {
         throw new Error('Failed to fetch data');
       }
       
-      // Separate customers and vendors
-      const customerIds = rolesData.filter(r => r.role === 'customer').map(r => r.user_id);
-      const vendorIds = rolesData.filter(r => r.role === 'shopkeeper').map(r => r.user_id);
+      // Separate customers and vendors based on profile role
+      const customers = profilesData.filter(p => p.role === 'customer');
+      const vendors = profilesData.filter(p => p.role === 'vendor' || p.role === 'shopkeeper');
       
-      // Enrich profiles with email (email is not in profiles table but we can get from auth)
+      // Enrich profiles with email (email is already in profiles table)
       const enrichedProfiles: User[] = profilesData.map(profile => ({
         id: profile.id,
         name: profile.name,

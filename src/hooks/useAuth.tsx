@@ -56,14 +56,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const fetchUserRole = async (userId: string) => {
-    const { data, error } = await supabase
-      .from('user_roles')
-      .select('role')
+    // Get profile id from auth.users.id
+    const { data: profile, error } = await supabase
+      .from('profiles')
+      .select('role, id')
       .eq('user_id', userId)
       .single();
 
-    if (data) {
-      setUserRole(data.role as UserRole);
+    if (profile && profile.role) {
+      setUserRole(profile.role as UserRole);
     }
     
     if (error && error.code !== 'PGRST116') {

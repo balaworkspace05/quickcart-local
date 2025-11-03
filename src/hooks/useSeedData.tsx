@@ -43,18 +43,19 @@ export function useSeedData() {
 
       if (!profile) throw new Error('Profile not found');
 
-      // Check if user has shopkeeper role
-      const { data: roleData } = await supabase
-        .from('user_roles')
+      // Check if user has shopkeeper role, if not update it
+      const { data: profileData } = await supabase
+        .from('profiles')
         .select('role')
-        .eq('user_id', profile.id)
-        .maybeSingle();
+        .eq('id', profile.id)
+        .single();
 
-      if (!roleData || roleData.role !== 'shopkeeper') {
-        // Add shopkeeper role if not present
+      if (!profileData || profileData.role !== 'vendor') {
+        // Update profile role to vendor/shopkeeper
         await supabase
-          .from('user_roles')
-          .insert({ user_id: profile.id, role: 'shopkeeper' });
+          .from('profiles')
+          .update({ role: 'vendor' })
+          .eq('id', profile.id);
       }
 
       // Upload vendor logos

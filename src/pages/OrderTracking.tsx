@@ -23,14 +23,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 interface Order {
   id: string;
   status: string;
-  total_amount: number;
-  delivery_address: string;
+  total_price: number;
   created_at: string;
-  order_items?: {
-    products: {
-      name: string;
-    };
-  }[];
+  product_id?: string;
+  products?: {
+    name: string;
+  };
 }
 
 export default function OrderTracking() {
@@ -49,17 +47,24 @@ export default function OrderTracking() {
 
   const fetchOrders = async () => {
     try {
+      // Get profile id from user
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', user?.id)
+        .single();
+
+      if (!profile) return;
+
       const { data, error } = await supabase
         .from('orders')
         .select(`
           *,
-          order_items (
-            products (
-              name
-            )
+          products (
+            name
           )
         `)
-        .eq('user_id', user?.id)
+        .eq('customer_id', profile.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -78,8 +83,7 @@ export default function OrderTracking() {
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
-        table: 'orders',
-        filter: `user_id=eq.${user?.id}`
+        table: 'orders'
       }, () => {
         fetchOrders();
       })
@@ -92,8 +96,7 @@ export default function OrderTracking() {
   
   // Filter orders
   const filteredOrders = orders.filter(order => {
-    const matchesSearch = order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.delivery_address.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = order.id.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = selectedStatus === 'all' || order.status === selectedStatus;
     return matchesSearch && matchesStatus;
   });
@@ -231,14 +234,11 @@ export default function OrderTracking() {
                   </div>
                   <div className="space-y-2">
                     <p className="text-sm">
-                      <span className="font-medium">Delivery Address:</span> {order.delivery_address}
+                      <span className="font-medium">Total:</span> ₹{order.total_price}
                     </p>
-                    <p className="text-sm">
-                      <span className="font-medium">Total:</span> ₹{order.total_amount}
-                    </p>
-                    {order.order_items && order.order_items.length > 0 && (
+                    {order.products && (
                       <p className="text-sm text-muted-foreground">
-                        {order.order_items.length} item(s)
+                        Product: {order.products.name}
                       </p>
                     )}
                   </div>

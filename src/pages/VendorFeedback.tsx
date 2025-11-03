@@ -22,13 +22,6 @@ interface Review {
   profiles?: { name: string };
 }
 
-interface FeedbackReply {
-  id: string;
-  feedback_id: string;
-  message: string;
-  created_at: string;
-}
-
 interface Shop {
   id: string;
   name: string;
@@ -40,7 +33,6 @@ export default function VendorFeedback() {
   const [loading, setLoading] = useState(true);
   const [shop, setShop] = useState<Shop | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
-  const [replies, setReplies] = useState<Record<string, FeedbackReply>>({});
   const [replyText, setReplyText] = useState<Record<string, string>>({});
   const [avgRating, setAvgRating] = useState(0);
   const [sentiment, setSentiment] = useState({ positive: 0, neutral: 0, negative: 0 });
@@ -53,111 +45,106 @@ export default function VendorFeedback() {
   }, [user]);
 
   const setupRealtimeSubscriptions = () => {
-    // Subscribe to new reviews
-    const reviewsChannel = supabase
-      .channel('vendor-reviews')
+    // Subscribe to new feedback
+    const feedbackChannel = supabase
+      .channel('vendor-feedback')
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
-        table: 'reviews'
-      }, () => {
-        loadData();
-      })
-      .subscribe();
-
-    // Subscribe to feedback replies
-    const repliesChannel = supabase
-      .channel('vendor-replies')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'feedback_reply',
-        filter: `vendor_id=eq.${user?.id}`
+        table: 'feedback'
       }, () => {
         loadData();
       })
       .subscribe();
 
     return () => {
-      supabase.removeChannel(reviewsChannel);
-      supabase.removeChannel(repliesChannel);
+      supabase.removeChannel(feedbackChannel);
     };
   };
 
   const loadData = async () => {
     try {
       setLoading(true);
-      const { data: shopData, error: shopError } = await (supabase as any)
-        .from('shops')
-        .select('id, name, logo_url')
+      
+      // Get profile id from user
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id')
         .eq('user_id', user?.id)
+        .single();
+
+      if (!profile) return;
+
+      const { data: shopData, error: shopError } = await supabase
+        .from('vendors')
+        .select('id, shop_name, logo_url')
+        .eq('user_id', profile.id)
         .maybeSingle();
 
       if (shopError) throw shopError;
-      setShop(shopData);
+      
+      const transformedShop = shopData ? {
+        id: shopData.id,
+        name: shopData.shop_name,
+        logo_url: shopData.logo_url
+      } : null;
+      
+      setShop(transformedShop);
 
       if (shopData) {
         const { data: productIds } = await supabase
           .from('products')
           .select('id')
-          .eq('shop_id', shopData.id);
+          .eq('vendor_id', shopData.id);
 
         if (productIds && productIds.length > 0) {
           const ids = productIds.map(p => p.id);
           
-          const { data: reviewsData, error: reviewsError } = await supabase
-            .from('reviews')
+          const { data: feedbackData, error: feedbackError } = await supabase
+            .from('feedback')
             .select('*, products(name)')
             .in('product_id', ids)
             .order('created_at', { ascending: false });
 
-          if (reviewsError) throw reviewsError;
+          if (feedbackError) throw feedbackError;
 
-          // Fetch user profiles separately
-          if (reviewsData) {
-            const userIds = reviewsData.map(r => r.user_id);
+          // Fetch customer profiles separately
+          if (feedbackData) {
+            const customerIds = feedbackData.map(f => f.customer_id);
             const { data: profilesData } = await supabase
               .from('profiles')
               .select('id, name')
-              .in('id', userIds);
+              .in('id', customerIds);
 
             const profilesMap = profilesData?.reduce((acc, profile) => {
               acc[profile.id] = profile;
               return acc;
             }, {} as Record<string, { name: string }>) || {};
 
-            const reviewsWithProfiles = reviewsData.map(review => ({
-              ...review,
-              profiles: profilesMap[review.user_id],
+            const transformedReviews = feedbackData.map(feedback => ({
+              id: feedback.id,
+              rating: feedback.rating || 0,
+              feedback: feedback.comment || '',
+              created_at: feedback.created_at,
+              user_id: feedback.customer_id,
+              product_id: feedback.product_id || '',
+              products: feedback.products,
+              profiles: profilesMap[feedback.customer_id],
             }));
 
-            setReviews(reviewsWithProfiles);
-          }
+            setReviews(transformedReviews);
 
-          // Calculate average rating
-          if (reviewsData && reviewsData.length > 0) {
-            const avg = reviewsData.reduce((sum, r) => sum + r.rating, 0) / reviewsData.length;
-            setAvgRating(avg);
+            // Calculate average rating
+            if (feedbackData.length > 0) {
+              const avg = feedbackData.reduce((sum, f) => sum + (f.rating || 0), 0) / feedbackData.length;
+              setAvgRating(avg);
 
-            // Calculate sentiment
-            const positive = reviewsData.filter(r => r.rating >= 4).length;
-            const neutral = reviewsData.filter(r => r.rating === 3).length;
-            const negative = reviewsData.filter(r => r.rating < 3).length;
-            setSentiment({ positive, neutral, negative });
-          }
-
-          // Load replies
-          const { data: repliesData } = await supabase
-            .from('feedback_reply')
-            .select('*')
-            .eq('vendor_id', user?.id);
-
-          if (repliesData) {
-            const repliesMap = repliesData.reduce((acc, reply) => {
-              acc[reply.feedback_id] = reply;
-              return acc;
-            }, {} as Record<string, FeedbackReply>);
-            setReplies(repliesMap);
+              // Calculate sentiment
+              const positive = feedbackData.filter(f => (f.rating || 0) >= 4).length;
+              const neutral = feedbackData.filter(f => (f.rating || 0) === 3).length;
+              const negative = feedbackData.filter(f => (f.rating || 0) < 3).length;
+              setSentiment({ positive, neutral, negative });
+            }
           }
         }
       }
@@ -173,11 +160,10 @@ export default function VendorFeedback() {
     if (!replyText[reviewId]?.trim()) return;
 
     try {
-      const { error } = await supabase.from('feedback_reply').insert({
-        feedback_id: reviewId,
-        vendor_id: user?.id,
-        message: replyText[reviewId],
-      });
+      const { error } = await supabase
+        .from('feedback')
+        .update({ reply: replyText[reviewId] })
+        .eq('id', reviewId);
 
       if (error) throw error;
       toast.success('Reply posted successfully');
@@ -297,28 +283,18 @@ export default function VendorFeedback() {
                   <p className="text-muted-foreground mb-4">{review.feedback}</p>
                 )}
 
-                {replies[review.id] ? (
-                  <div className="bg-accent p-4 rounded-lg">
-                    <div className="flex items-center gap-2 mb-2">
-                      <MessageSquare className="w-4 h-4" />
-                      <span className="font-medium text-sm">Your Reply</span>
-                    </div>
-                    <p className="text-sm">{replies[review.id].message}</p>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <Textarea
-                      placeholder="Write a reply to this review..."
-                      value={replyText[review.id] || ''}
-                      onChange={(e) => setReplyText({ ...replyText, [review.id]: e.target.value })}
-                      className="min-h-[80px]"
-                    />
-                    <Button onClick={() => handleReply(review.id)}>
-                      <MessageSquare className="w-4 h-4 mr-2" />
-                      Post Reply
-                    </Button>
-                  </div>
-                )}
+                <div className="space-y-2">
+                  <Textarea
+                    placeholder="Write a reply to this review..."
+                    value={replyText[review.id] || ''}
+                    onChange={(e) => setReplyText({ ...replyText, [review.id]: e.target.value })}
+                    className="min-h-[80px]"
+                  />
+                  <Button onClick={() => handleReply(review.id)}>
+                    <MessageSquare className="w-4 h-4 mr-2" />
+                    Post Reply
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           ))}

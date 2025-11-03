@@ -187,15 +187,16 @@ export default function Auth() {
       }
 
       if (data.user) {
-        const { data: roleData } = await supabase
-          .from('user_roles')
-          .select('role')
+        // Get profile and role from profiles table
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('role, id')
           .eq('user_id', data.user.id)
           .single();
 
-        if (roleData) {
+        if (profileData && profileData.role) {
           toast.success('Login successful!');
-          switch (roleData.role) {
+          switch (profileData.role) {
             case 'customer':
               navigate('/customer/dashboard');
               break;
