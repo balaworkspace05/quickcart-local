@@ -256,11 +256,18 @@ export default function AuthNew() {
       
       if (demoUser && formData.password === demoUser.password) {
         // For demo users, get profile from database and redirect
-        const { data: profile } = await supabase
+        const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('*')
           .eq('email', formData.email)
           .single();
+        
+        if (profileError) {
+          console.error('Profile fetch error:', profileError);
+          toast.error(`Failed to fetch profile: ${profileError.message}`);
+          setLoading(false);
+          return;
+        }
         
         if (profile) {
           // Store demo session in localStorage
@@ -270,15 +277,11 @@ export default function AuthNew() {
             profile: profile
           }));
           
-          toast.success(`Logged in as ${demoUser.role}!`);
+          toast.success(`Logged in successfully!`);
           setLoading(false);
           
           // Redirect based on role
           navigate(demoUser.redirectTo);
-          return;
-        } else {
-          toast.error('Demo user profile not found in database');
-          setLoading(false);
           return;
         }
       }
