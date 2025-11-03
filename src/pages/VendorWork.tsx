@@ -14,7 +14,7 @@ import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Responsi
 
 interface Shop {
   id: string;
-  name: string;
+  shop_name: string;
   logo_url: string | null;
 }
 
@@ -59,50 +59,45 @@ export default function VendorWork() {
     try {
       setLoading(true);
       const { data: shopData, error: shopError } = await supabase
-        .from('shops')
-        .select('id, name, logo_url, rating')
-        .eq('owner_id', user?.id)
+        .from('vendors')
+        .select('id, shop_name, logo_url')
+        .eq('user_id', user?.id)
         .single();
 
       if (shopError) throw shopError;
       setShop(shopData);
 
-      // Load vendor tasks
-      const { data: tasksData } = await supabase
-        .from('vendor_tasks')
-        .select('*')
-        .eq('vendor_id', user?.id)
-        .order('created_at', { ascending: false });
-
-      setTasks(tasksData || []);
+      // For now, use empty tasks array since vendor_tasks table doesn't exist
+      const tasksData: VendorTask[] = [];
+      setTasks(tasksData);
 
       if (shopData) {
         // Calculate performance metrics
         const { data: products } = await supabase
           .from('products')
-          .select('stock, is_available')
-          .eq('shop_id', shopData.id);
+          .select('stock, in_stock')
+          .eq('vendor_id', shopData.id);
 
-        const { data: orderItems } = await supabase
-          .from('order_items')
-          .select('order_id, orders(status, created_at)')
-          .eq('shop_id', shopData.id);
+        const { data: orders } = await supabase
+          .from('orders')
+          .select('status, created_at')
+          .eq('vendor_id', shopData.id);
 
-        const { data: reviews } = await supabase
-          .from('reviews')
-          .select('rating, product_id, products(shop_id)')
-          .eq('products.shop_id', shopData.id);
+        const { data: feedback } = await supabase
+          .from('feedback')
+          .select('rating')
+          .eq('vendor_id', shopData.id);
 
         // Calculate metrics
-        const availableProducts = products?.filter(p => p.is_available && p.stock > 0).length || 0;
+        const availableProducts = products?.filter(p => p.in_stock && p.stock > 0).length || 0;
         const totalProducts = products?.length || 1;
         const productAvailability = (availableProducts / totalProducts) * 100;
 
-        const deliveredOrders = orderItems?.filter((oi: any) => oi.orders?.status === 'delivered').length || 0;
-        const totalOrders = orderItems?.length || 1;
+        const deliveredOrders = orders?.filter((o: any) => o.status === 'delivered').length || 0;
+        const totalOrders = orders?.length || 1;
         const onTimeDelivery = (deliveredOrders / totalOrders) * 100;
 
-        const avgRating = shopData.rating || 0;
+        const avgRating = feedback?.reduce((sum, f) => sum + (f.rating || 0), 0) / (feedback?.length || 1);
         const avgRatingTrend = (avgRating / 5) * 100;
 
         const calculatedMetrics: PerformanceMetrics = {
@@ -110,7 +105,7 @@ export default function VendorWork() {
           customerRetention: Math.min(95, 60 + (avgRating * 7)),
           avgRatingTrend,
           productAvailability,
-          responseTime: Math.max(50, 100 - (reviews?.length || 0) * 2),
+          responseTime: Math.max(50, 100 - (feedback?.length || 0) * 2),
         };
 
         setMetrics(calculatedMetrics);
@@ -125,16 +120,6 @@ export default function VendorWork() {
         if (avgRatingTrend < 70) newSuggestions.push('Focus on improving product quality based on customer feedback');
         if (onTimeDelivery < 90) newSuggestions.push('Optimize order fulfillment process to improve delivery times');
         setSuggestions(newSuggestions);
-
-        // Create tasks if none exist
-        if (!tasksData || tasksData.length === 0) {
-          await supabase.from('vendor_tasks').insert([
-            { vendor_id: user?.id, task: 'Update product images for better visibility' },
-            { vendor_id: user?.id, task: 'Review and respond to pending customer feedback' },
-            { vendor_id: user?.id, task: 'Check inventory levels and restock popular items' },
-          ]);
-          loadData(); // Reload to get the new tasks
-        }
       }
     } catch (error: any) {
       console.error('Error loading data:', error);
@@ -145,22 +130,8 @@ export default function VendorWork() {
   };
 
   const toggleTaskStatus = async (taskId: string, currentStatus: string) => {
-    try {
-      const newStatus = currentStatus === 'completed' ? 'pending' : 'completed';
-      const { error } = await supabase
-        .from('vendor_tasks')
-        .update({
-          status: newStatus,
-          completed_at: newStatus === 'completed' ? new Date().toISOString() : null,
-        })
-        .eq('id', taskId);
-
-      if (error) throw error;
-      toast.success(`Task ${newStatus === 'completed' ? 'completed' : 'reopened'}`);
-      loadData();
-    } catch (error: any) {
-      toast.error('Failed to update task');
-    }
+    // Tasks functionality disabled until vendor_tasks table is created
+    toast.info('Task management coming soon');
   };
 
   const radarData = [
@@ -183,7 +154,7 @@ export default function VendorWork() {
 
   if (loading) {
     return (
-      <VendorLayout shopName={shop?.name}>
+      <VendorLayout shopName={shop?.shop_name}>
         <div className="space-y-6">
           <Skeleton className="h-10 w-64" />
           <Skeleton className="h-96" />
@@ -193,7 +164,7 @@ export default function VendorWork() {
   }
 
   return (
-    <VendorLayout shopName={shop?.name} shopLogo={shop?.logo_url}>
+    <VendorLayout shopName={shop?.shop_name} shopLogo={shop?.logo_url}>
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold">Performance Insights</h1>

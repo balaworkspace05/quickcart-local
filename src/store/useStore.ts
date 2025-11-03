@@ -73,7 +73,7 @@ export const useStore = create<AppState>((set, get) => ({
       }));
     } else {
       set(state => ({
-        cartItems: [...state.cartItems, { product, quantity, shopId: product.shop_id }]
+        cartItems: [...state.cartItems, { product, quantity, shopId: product.vendor_id }]
       }));
     }
     

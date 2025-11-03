@@ -27,13 +27,13 @@ interface Product {
   stock: number;
   category: string;
   image_url: string | null;
-  is_available: boolean;
+  in_stock: boolean;
   unit: string | null;
 }
 
 interface Shop {
   id: string;
-  name: string;
+  shop_name: string;
   logo_url: string | null;
 }
 
@@ -70,9 +70,9 @@ export default function VendorInventory() {
       
       // Fetch or create shop for vendor
       let { data: shopData, error: shopError } = await supabase
-        .from('shops')
-        .select('id, name, logo_url')
-        .eq('owner_id', user?.id)
+        .from('vendors')
+        .select('id, shop_name, logo_url')
+        .eq('user_id', user?.id)
         .maybeSingle();
 
       if (shopError) {
@@ -90,18 +90,14 @@ export default function VendorInventory() {
           .maybeSingle();
 
         const { data: newShop, error: createError } = await supabase
-          .from('shops')
+          .from('vendors')
           .insert({
             user_id: user?.id,
-            name: profileData?.name ? `${profileData.name}'s Shop` : 'My Shop',
-            location: profileData?.address || 'Location not set',
-            category: 'General',
-            is_open: true,
-            rating: 0.0,
-            delivery_time: '20-30 mins',
-            distance: '1.5 km'
-          } as any)
-          .select('id, name, logo_url')
+            shop_name: profileData?.name ? `${profileData.name}'s Shop` : 'My Shop',
+            address: profileData?.address || 'Location not set',
+            owner_name: profileData?.name || 'Owner'
+          })
+          .select('id, shop_name, logo_url')
           .single();
 
         if (createError) {
@@ -120,7 +116,7 @@ export default function VendorInventory() {
         const { data: productsData, error: productsError } = await supabase
           .from('products')
           .select('*')
-          .eq('shop_id', shopData.id)
+          .eq('vendor_id', shopData.id)
           .order('created_at', { ascending: false });
 
         if (productsError) throw productsError;
@@ -144,7 +140,7 @@ export default function VendorInventory() {
         event: '*',
         schema: 'public',
         table: 'products',
-        filter: `shop_id=eq.${shop.id}`
+        filter: `vendor_id=eq.${shop.id}`
       }, () => {
         loadData();
       })
@@ -213,7 +209,7 @@ export default function VendorInventory() {
       }
 
       const productData = {
-        shop_id: shop.id,
+        vendor_id: shop.id,
         name: productForm.name.trim(),
         description: productForm.description.trim() || null,
         price: parseFloat(productForm.price),
@@ -221,7 +217,7 @@ export default function VendorInventory() {
         stock: parseInt(productForm.stock),
         category: productForm.category.trim(),
         unit: productForm.unit,
-        is_available: true,
+        in_stock: true,
         image_url,
       };
 
@@ -266,11 +262,11 @@ export default function VendorInventory() {
     try {
       const { error } = await supabase
         .from('products')
-        .update({ is_available: !product.is_available })
+        .update({ in_stock: !product.in_stock })
         .eq('id', product.id);
 
       if (error) throw error;
-      toast.success(`Product ${product.is_available ? 'disabled' : 'enabled'}`);
+      toast.success(`Product ${product.in_stock ? 'disabled' : 'enabled'}`);
       loadData();
     } catch (error: any) {
       toast.error('Failed to update product');
@@ -317,7 +313,7 @@ export default function VendorInventory() {
 
   if (loading) {
     return (
-      <VendorLayout shopName={shop?.name}>
+      <VendorLayout shopName={shop?.shop_name}>
         <div className="space-y-6">
           <Skeleton className="h-10 w-64" />
           <Skeleton className="h-96" />
@@ -327,7 +323,7 @@ export default function VendorInventory() {
   }
 
   return (
-    <VendorLayout shopName={shop?.name} shopLogo={shop?.logo_url}>
+    <VendorLayout shopName={shop?.shop_name} shopLogo={shop?.logo_url}>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -536,8 +532,8 @@ export default function VendorInventory() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={product.is_available ? 'default' : 'secondary'}>
-                          {product.is_available ? 'Active' : 'Inactive'}
+                        <Badge variant={product.in_stock ? 'default' : 'secondary'}>
+                          {product.in_stock ? 'Active' : 'Inactive'}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
@@ -547,7 +543,7 @@ export default function VendorInventory() {
                             variant="ghost"
                             onClick={() => handleToggleAvailability(product)}
                           >
-                            {product.is_available ? 'Disable' : 'Enable'}
+                            {product.in_stock ? 'Disable' : 'Enable'}
                           </Button>
                           <Button
                             size="sm"

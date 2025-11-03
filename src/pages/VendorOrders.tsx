@@ -15,12 +15,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 interface Order {
   id: string;
-  total_amount: number;
+  total_price: number;
   status: string;
   created_at: string;
-  delivery_address: string;
-  payment_status: string;
+  payment_mode: string;
   profiles?: { name: string };
+  product_id?: string;
+  products?: { name: string; unit: string };
 }
 
 interface OrderItem {
@@ -33,7 +34,7 @@ interface OrderItem {
 
 interface Shop {
   id: string;
-  name: string;
+  shop_name: string;
   logo_url: string | null;
 }
 
@@ -78,31 +79,23 @@ export default function VendorOrders() {
     try {
       setLoading(true);
       const { data: shopData, error: shopError } = await supabase
-        .from('shops')
-        .select('id, name, logo_url')
-        .eq('owner_id', user?.id)
+        .from('vendors')
+        .select('id, shop_name, logo_url')
+        .eq('user_id', user?.id)
         .single();
 
       if (shopError) throw shopError;
       setShop(shopData);
 
       if (shopData) {
-        const { data: orderItemsData, error: orderItemsError } = await supabase
-          .from('order_items')
-          .select('*, products(name, unit), orders(*, profiles(name))')
-          .eq('shop_id', shopData.id)
+        const { data: ordersData, error: ordersError } = await supabase
+          .from('orders')
+          .select('*, products(name, unit), profiles(name)')
+          .eq('vendor_id', shopData.id)
           .order('created_at', { ascending: false });
 
-        if (orderItemsError) throw orderItemsError;
-
-        const uniqueOrders = orderItemsData
-          ?.map((item: any) => item.orders)
-          .filter((order: any, index: number, self: any[]) =>
-            index === self.findIndex((o: any) => o?.id === order?.id)
-          )
-          .filter((order: any) => order !== null) || [];
-
-        setOrders(uniqueOrders);
+        if (ordersError) throw ordersError;
+        setOrders(ordersData || []);
       }
     } catch (error: any) {
       console.error('Error loading data:', error);
@@ -114,14 +107,15 @@ export default function VendorOrders() {
 
   const loadOrderDetails = async (order: Order) => {
     try {
-      const { data, error } = await supabase
-        .from('order_items')
-        .select('*, products(name, unit)')
-        .eq('order_id', order.id)
-        .eq('shop_id', shop?.id);
-
-      if (error) throw error;
-      setOrderItems(data || []);
+      // For now, create a single order item from the order data
+      const orderItem: OrderItem = {
+        id: order.id,
+        product_id: order.product_id || order.id,
+        quantity: 1,
+        price: order.total_price,
+        products: order.products || { name: 'Order Items', unit: 'items' }
+      };
+      setOrderItems([orderItem]);
       setSelectedOrder(order);
       setIsDetailOpen(true);
     } catch (error: any) {
@@ -162,7 +156,7 @@ export default function VendorOrders() {
       ...orders.map(order => [
         order.id.slice(0, 8),
         order.profiles?.name || 'Unknown',
-        `₹${order.total_amount}`,
+        `₹${order.total_price}`,
         order.status,
         new Date(order.created_at).toLocaleDateString()
       ])
@@ -178,7 +172,7 @@ export default function VendorOrders() {
 
   if (loading) {
     return (
-      <VendorLayout shopName={shop?.name}>
+      <VendorLayout shopName={shop?.shop_name}>
         <div className="space-y-6">
           <Skeleton className="h-10 w-64" />
           <Skeleton className="h-96" />
@@ -188,7 +182,7 @@ export default function VendorOrders() {
   }
 
   return (
-    <VendorLayout shopName={shop?.name} shopLogo={shop?.logo_url}>
+    <VendorLayout shopName={shop?.shop_name} shopLogo={shop?.logo_url}>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -223,10 +217,10 @@ export default function VendorOrders() {
                       #{order.id.slice(0, 8)}
                     </TableCell>
                     <TableCell>{order.profiles?.name || 'Unknown'}</TableCell>
-                    <TableCell className="font-medium">₹{order.total_amount}</TableCell>
+                    <TableCell className="font-medium">₹{order.total_price}</TableCell>
                     <TableCell>
-                      <Badge variant={order.payment_status === 'paid' ? 'default' : 'secondary'}>
-                        {order.payment_status}
+                      <Badge variant={order.payment_mode === 'online' ? 'default' : 'secondary'}>
+                        {order.payment_mode}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -278,8 +272,8 @@ export default function VendorOrders() {
                     <p className="font-medium">{selectedOrder.profiles?.name}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Delivery Address</p>
-                    <p className="font-medium">{selectedOrder.delivery_address}</p>
+                    <p className="text-sm text-muted-foreground">Payment Mode</p>
+                    <p className="font-medium">{selectedOrder.payment_mode}</p>
                   </div>
                 </div>
 
@@ -310,7 +304,7 @@ export default function VendorOrders() {
                 <div className="border-t pt-4">
                   <div className="flex justify-between text-lg font-bold">
                     <span>Total Amount:</span>
-                    <span>₹{selectedOrder.total_amount}</span>
+                    <span>₹{selectedOrder.total_price}</span>
                   </div>
                 </div>
               </div>

@@ -53,9 +53,9 @@ export default function VendorProfile() {
 
       // Fetch shop data
       const { data: shopData, error: shopError } = await supabase
-        .from('shops')
+        .from('vendors')
         .select('*')
-        .eq('owner_id', user?.id)
+        .eq('user_id', user?.id)
         .single();
 
       if (shopError && shopError.code !== 'PGRST116') throw shopError;

@@ -75,8 +75,8 @@ export default function AdminDashboard() {
         email: 'Email not available' // Email from auth context would need separate fetch
       }));
       
-      setCustomers(enrichedProfiles.filter(p => customerIds.includes(p.id)));
-      setVendors(enrichedProfiles.filter(p => vendorIds.includes(p.id)));
+      setCustomers(enrichedProfiles.filter(p => customers.map(c => c.id).includes(p.id)));
+      setVendors(enrichedProfiles.filter(p => vendors.map(v => v.id).includes(p.id)));
 
       // Fetch vendor shops
       const { data: vendorsData } = await supabase.from('vendors').select('*');
