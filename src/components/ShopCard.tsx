@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
-import { MapPin, Store } from 'lucide-react';
+import { Clock, MapPin, Star, Tag } from 'lucide-react';
 import { Shop } from '@/hooks/useShops';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -11,6 +11,16 @@ interface ShopCardProps {
 }
 
 export default function ShopCard({ shop }: ShopCardProps) {
+  const categoryColors: Record<string, string> = {
+    grocery: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+    pharmacy: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+    bakery: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
+    electronics: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
+    clothing: 'bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200'
+  };
+
+  const categoryColor = categoryColors[shop.category.toLowerCase()] || 'bg-gray-100 text-gray-800';
+
   return (
     <motion.div
       whileHover={{ scale: 1.02, y: -2 }}
@@ -22,44 +32,49 @@ export default function ShopCard({ shop }: ShopCardProps) {
           {/* Header with Logo and Status */}
           <div className="flex items-start justify-between mb-3">
             <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-gradient-primary rounded-full flex items-center justify-center text-white text-2xl overflow-hidden">
-                {shop.logo_url ? (
-                  <img src={shop.logo_url} alt={shop.shop_name} className="w-full h-full object-cover" />
-                ) : (
-                  <Store className="w-6 h-6" />
-                )}
+              <div className="w-12 h-12 bg-gradient-primary rounded-full flex items-center justify-center text-white text-2xl">
+                {shop.logo_url || '🏪'}
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold text-lg leading-tight">{shop.shop_name}</h3>
-                <p className="text-xs text-muted-foreground">{shop.owner_name}</p>
+                <h3 className="font-semibold text-lg leading-tight">{shop.name}</h3>
+                <Badge className={`text-xs ${categoryColor}`}>
+                  {shop.category.charAt(0).toUpperCase() + shop.category.slice(1)}
+                </Badge>
               </div>
             </div>
             
-            <Badge variant="default" className="text-xs">
-              Open
-            </Badge>
+            <div className="flex flex-col items-end space-y-1">
+              <Badge variant={shop.is_open ? "default" : "secondary"} className="text-xs">
+                {shop.is_open ? 'Open' : 'Closed'}
+              </Badge>
+              <div className="flex items-center space-x-1 text-xs text-muted-foreground">
+                <Star className="w-3 h-3 fill-current text-warning" />
+                <span className="font-medium">{shop.rating?.toFixed(1) || '0.0'}</span>
+              </div>
+            </div>
           </div>
           
-          {/* Shop Info */}
+          {/* Delivery Info */}
           <div className="space-y-2 mb-3">
-            {shop.address && (
-              <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                <MapPin className="w-4 h-4" />
-                <span className="line-clamp-1">{shop.address}</span>
-              </div>
-            )}
-            {shop.phone && (
-              <div className="text-sm text-muted-foreground">
-                📞 {shop.phone}
-              </div>
-            )}
+            <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+              <MapPin className="w-4 h-4" />
+              <span>{shop.distance} away</span>
+            </div>
+            
+            <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+              <Clock className="w-4 h-4" />
+              <span>{shop.delivery_time}</span>
+            </div>
           </div>
         </CardContent>
         
         <CardFooter className="pt-0 px-4 pb-4">
           <Link to={`/shop/${shop.id}`} className="w-full">
-            <Button className="w-full bg-gradient-primary hover:bg-primary-hover text-primary-foreground">
-              Browse Products
+            <Button 
+              className="w-full bg-gradient-primary hover:bg-primary-hover text-primary-foreground"
+              disabled={!shop.is_open}
+            >
+              {shop.is_open ? 'Browse Products' : 'Currently Closed'}
             </Button>
           </Link>
         </CardFooter>

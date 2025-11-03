@@ -28,23 +28,23 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   const handleBuyNow = async () => {
     try {
-      const { data: vendorData, error } = await supabase
-        .from('vendors')
+      const { data: shopData, error } = await supabase
+        .from('shops')
         .select('*')
-        .eq('id', product.vendor_id)
+        .eq('id', product.shop_id)
         .single();
 
       if (error) throw error;
-      if (!vendorData) {
-        toast.error('Vendor not found');
+      if (!shopData) {
+        toast.error('Shop not found');
         return;
       }
 
-      setShop(vendorData);
+      setShop(shopData);
       setIsCheckoutOpen(true);
     } catch (error: any) {
-      console.error('Error fetching vendor:', error);
-      toast.error('Failed to load vendor details');
+      console.error('Error fetching shop:', error);
+      toast.error('Failed to load shop details');
     }
   };
   

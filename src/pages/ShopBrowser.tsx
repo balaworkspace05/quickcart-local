@@ -36,8 +36,23 @@ export default function ShopBrowser() {
 
   // Filter and sort shops
   let filteredShops = (shops || []).filter(shop => {
-    const matchesSearch = shop.shop_name.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesSearch;
+    const matchesSearch = shop.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = selectedCategory === 'all' || shop.category.toLowerCase() === selectedCategory.toLowerCase();
+    return matchesSearch && matchesCategory;
+  });
+
+  // Sort shops
+  filteredShops = filteredShops.sort((a, b) => {
+    switch (sortBy) {
+      case 'distance':
+        return parseFloat(a.distance) - parseFloat(b.distance);
+      case 'rating':
+        return (b.rating || 0) - (a.rating || 0);
+      case 'delivery-time':
+        return parseInt(a.delivery_time.split('-')[0]) - parseInt(b.delivery_time.split('-')[0]);
+      default:
+        return 0;
+    }
   });
 
   if (isLoading) {

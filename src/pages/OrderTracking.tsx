@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -14,149 +14,44 @@ import {
   Phone,
   MessageSquare
 } from 'lucide-react';
+import { useStore } from '@/store/useStore';
+import OrderCard from '@/components/OrderCard';
 import { motion } from 'framer-motion';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
-import { toast } from 'sonner';
-import { Skeleton } from '@/components/ui/skeleton';
-
-interface Order {
-  id: string;
-  status: string;
-  total_price: number;
-  created_at: string;
-  product_id?: string;
-  products?: {
-    name: string;
-  };
-}
 
 export default function OrderTracking() {
-  const { user } = useAuth();
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { orders } = useStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
-
-  // Check for demo user
-  const getDemoUser = () => {
-    const demoUserData = localStorage.getItem('demo_user');
-    if (demoUserData) {
-      return JSON.parse(demoUserData);
-    }
-    return null;
-  };
-
-  useEffect(() => {
-    const demoUser = getDemoUser();
-    if (user || demoUser) {
-      fetchOrders();
-      setupRealtimeSubscription();
-    }
-  }, [user]);
-
-  const fetchOrders = async () => {
-    try {
-      // Get profile id from user or demo user
-      const demoUser = getDemoUser();
-      let profileId = null;
-
-      if (demoUser) {
-        // Use demo user profile
-        profileId = demoUser.profile.id;
-      } else if (user) {
-        // Get profile id from authenticated user
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('user_id', user.id)
-          .single();
-        profileId = profile?.id;
-      }
-
-      if (!profileId) {
-        setLoading(false);
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from('orders')
-        .select(`
-          *,
-          products (
-            name
-          )
-        `)
-        .eq('customer_id', profileId)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setOrders(data || []);
-    } catch (error: any) {
-      console.error('Failed to load orders:', error);
-      toast.error('Failed to load orders');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const setupRealtimeSubscription = () => {
-    const channel = supabase
-      .channel('order-tracking')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'orders'
-      }, () => {
-        fetchOrders();
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  };
+  
+  // Use only store orders
+  const allOrders = orders;
   
   // Filter orders
-  const filteredOrders = orders.filter(order => {
-    const matchesSearch = order.id.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredOrders = allOrders.filter(order => {
+    const matchesSearch = order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.deliveryAddress.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = selectedStatus === 'all' || order.status === selectedStatus;
     return matchesSearch && matchesStatus;
   });
   
   // Order status counts
   const statusCounts = {
-    all: orders.length,
-    pending: orders.filter(o => o.status === 'pending').length,
-    confirmed: orders.filter(o => o.status === 'confirmed').length,
-    out_for_delivery: orders.filter(o => o.status === 'out_for_delivery').length,
-    delivered: orders.filter(o => o.status === 'delivered').length,
+    all: allOrders.length,
+    confirmed: allOrders.filter(o => o.status === 'confirmed').length,
+    packed: allOrders.filter(o => o.status === 'packed').length,
+    'out-for-delivery': allOrders.filter(o => o.status === 'out-for-delivery').length,
+    delivered: allOrders.filter(o => o.status === 'delivered').length,
   };
 
-  const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
-    pending: { label: 'Pending', color: 'bg-gray-500', icon: Clock },
+  const statusConfig = {
     confirmed: { label: 'Confirmed', color: 'bg-blue-500', icon: CheckCircle },
-    out_for_delivery: { label: 'Out for Delivery', color: 'bg-orange-500', icon: Truck },
+    packed: { label: 'Packed', color: 'bg-yellow-500', icon: Package },
+    'out-for-delivery': { label: 'Out for Delivery', color: 'bg-orange-500', icon: Truck },
     delivered: { label: 'Delivered', color: 'bg-green-500', icon: CheckCircle }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background pt-24">
-        <div className="container mx-auto px-4 py-8">
-          <Skeleton className="h-12 w-64 mb-8" />
-          <div className="space-y-4">
-            {[...Array(3)].map((_, i) => (
-              <Skeleton key={i} className="h-32 w-full" />
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-background pt-24">
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <motion.div
@@ -245,27 +140,7 @@ export default function OrderTracking() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 * index }}
               >
-                <Card className="p-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <div>
-                      <p className="font-semibold">Order #{order.id.slice(0, 8)}</p>
-                      <p className="text-sm text-muted-foreground">{new Date(order.created_at).toLocaleDateString()}</p>
-                    </div>
-                    <Badge className={statusConfig[order.status as keyof typeof statusConfig]?.color || 'bg-gray-500'}>
-                      {order.status.replace('_', ' ')}
-                    </Badge>
-                  </div>
-                  <div className="space-y-2">
-                    <p className="text-sm">
-                      <span className="font-medium">Total:</span> ₹{order.total_price}
-                    </p>
-                    {order.products && (
-                      <p className="text-sm text-muted-foreground">
-                        Product: {order.products.name}
-                      </p>
-                    )}
-                  </div>
-                </Card>
+                <OrderCard order={order} />
               </motion.div>
             ))}
           </motion.div>
@@ -296,6 +171,68 @@ export default function OrderTracking() {
                 Clear Filters
               </Button>
             )}
+          </motion.div>
+        )}
+
+        {/* Live Tracking Demo */}
+        {filteredOrders.some(o => o.status === 'out-for-delivery') && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="mt-12"
+          >
+            <Card className="bg-gradient-card border-0 shadow-floating">
+              <CardHeader>
+                <div className="flex items-center space-x-2">
+                  <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                  <h3 className="font-semibold">Live Tracking Available</h3>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-gradient-primary rounded-full flex items-center justify-center text-white">
+                        <Truck className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <p className="font-medium">Rajesh (Delivery Partner)</p>
+                        <p className="text-sm text-muted-foreground">Order #ORD001</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex space-x-2">
+                      <Button variant="outline" size="sm">
+                        <Phone className="w-4 h-4 mr-2" />
+                        Call
+                      </Button>
+                      <Button variant="outline" size="sm">
+                        <MessageSquare className="w-4 h-4 mr-2" />
+                        Chat
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-muted rounded-lg p-4">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <MapPin className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-sm font-medium">Current Location</span>
+                    </div>
+                    <p className="text-sm text-muted-foreground pl-6">
+                      Sector 14, Near Metro Station - 2 min away
+                    </p>
+                    
+                    <div className="mt-3 flex items-center space-x-2">
+                      <Clock className="w-4 h-4 text-green-600" />
+                      <span className="text-sm text-green-600 font-medium">
+                        Arriving in 3-5 minutes
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </motion.div>
         )}
       </div>

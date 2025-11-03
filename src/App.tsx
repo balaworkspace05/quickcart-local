@@ -19,8 +19,8 @@ import VendorDashboard from "@/pages/VendorDashboard";
 import DeliveryDashboard from "@/pages/DeliveryDashboard";
 import LoyaltyRewards from "@/pages/LoyaltyRewards";
 import Cart from "@/pages/Cart";
-import AuthNew from "@/pages/AuthNew";
-
+import Auth from "@/pages/Auth";
+import AuthCallback from "@/pages/AuthCallback";
 import Profile from "@/pages/Profile";
 import About from "@/pages/About";
 import Contact from "@/pages/Contact";
@@ -54,31 +54,172 @@ const App = () => (
               <PageTransition>
                 <Routes>
                   <Route path="/" element={<Landing />} />
-                  <Route path="/auth" element={<AuthNew />} />
+                  <Route path="/auth" element={<Auth />} />
+                  <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/shops" element={<ShopBrowser />} />
           <Route path="/market" element={<Market />} />
                   <Route path="/shop/:shopId" element={<ProductListing />} />
-                  <Route path="/cart" element={<Cart />} />
-                  <Route path="/orders" element={<OrderTracking />} />
-                  <Route path="/loyalty" element={<LoyaltyRewards />} />
-                  <Route path="/profile" element={<Profile />} />
-                  <Route path="/dashboard" element={<ShopkeeperDashboard />} />
-                  <Route path="/inventory" element={<ShopkeeperDashboard />} />
-                  <Route path="/analytics" element={<ShopkeeperDashboard />} />
-                  <Route path="/delivery-dashboard" element={<DeliveryDashboard />} />
-                  <Route path="/routes" element={<DeliveryDashboard />} />
-                  <Route path="/earnings" element={<DeliveryDashboard />} />
+                  <Route 
+                    path="/cart" 
+                    element={
+                      <ProtectedRoute>
+                        <Cart />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/orders" 
+                    element={
+                      <ProtectedRoute>
+                        <OrderTracking />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/loyalty" 
+                    element={
+                      <ProtectedRoute>
+                        <LoyaltyRewards />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/profile" 
+                    element={
+                      <ProtectedRoute>
+                        <Profile />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route
+                    path="/dashboard" 
+                    element={
+                      <ProtectedRoute requireRole="shopkeeper">
+                        <ShopkeeperDashboard />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/inventory" 
+                    element={
+                      <ProtectedRoute requireRole="shopkeeper">
+                        <ShopkeeperDashboard />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/analytics" 
+                    element={
+                      <ProtectedRoute requireRole="shopkeeper">
+                        <ShopkeeperDashboard />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/delivery-dashboard" 
+                    element={
+                      <ProtectedRoute requireRole="delivery">
+                        <DeliveryDashboard />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/routes" 
+                    element={
+                      <ProtectedRoute requireRole="delivery">
+                        <DeliveryDashboard />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/earnings" 
+                    element={
+                      <ProtectedRoute requireRole="delivery">
+                        <DeliveryDashboard />
+                      </ProtectedRoute>
+                    } 
+                  />
                   <Route path="/feedback" element={<OrderTracking />} />
-                  <Route path="/admin" element={<AdminDashboard />} />
-                  <Route path="/customer/dashboard" element={<CustomerDashboard />} />
-                  <Route path="/customer/profile" element={<CustomerProfile />} />
-                  <Route path="/customer/feedback" element={<CustomerFeedback />} />
-                  <Route path="/vendor/dashboard" element={<VendorDashboard />} />
-                  <Route path="/vendor/inventory" element={<VendorInventory />} />
-                  <Route path="/vendor/orders" element={<VendorOrders />} />
-                  <Route path="/vendor/feedback" element={<VendorFeedback />} />
-                  <Route path="/vendor/work" element={<VendorWork />} />
-                  <Route path="/vendor/profile" element={<VendorProfile />} />
+                  <Route 
+                    path="/admin" 
+                    element={
+                      <ProtectedRoute requireRole="admin">
+                        <AdminDashboard />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/customer/dashboard" 
+                    element={
+                      <ProtectedRoute requireRole="customer">
+                        <CustomerDashboard />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/customer/profile" 
+                    element={
+                      <ProtectedRoute requireRole="customer">
+                        <CustomerProfile />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/customer/feedback" 
+                    element={
+                      <ProtectedRoute requireRole="customer">
+                        <CustomerFeedback />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/vendor/dashboard" 
+                    element={
+                      <ProtectedRoute requireRole="shopkeeper">
+                        <VendorDashboard />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/vendor/inventory" 
+                    element={
+                      <ProtectedRoute requireRole="shopkeeper">
+                        <VendorInventory />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/vendor/orders" 
+                    element={
+                      <ProtectedRoute requireRole="shopkeeper">
+                        <VendorOrders />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/vendor/feedback" 
+                    element={
+                      <ProtectedRoute requireRole="shopkeeper">
+                        <VendorFeedback />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/vendor/work" 
+                    element={
+                      <ProtectedRoute requireRole="shopkeeper">
+                        <VendorWork />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/vendor/profile" 
+                    element={
+                      <ProtectedRoute requireRole="shopkeeper">
+                        <VendorProfile />
+                      </ProtectedRoute>
+                    } 
+                  />
                   <Route path="/about" element={<About />} />
                   <Route path="/contact" element={<Contact />} />
                   <Route path="/help" element={<Help />} />

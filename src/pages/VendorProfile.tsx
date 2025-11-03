@@ -53,17 +53,15 @@ export default function VendorProfile() {
 
       // Fetch shop data
       const { data: shopData, error: shopError } = await supabase
-        .from('vendors')
+        .from('shops')
         .select('*')
-        .eq('user_id', user?.id)
+        .eq('owner_id', user?.id)
         .single();
 
       if (shopError && shopError.code !== 'PGRST116') throw shopError;
       setShop(shopData);
-      
-      // Get GPay QR from profile, not shop
-      if (data?.gpay_qr_url) {
-        setGpayQrPreview(data.gpay_qr_url);
+      if (shopData?.gpay_qr_url) {
+        setGpayQrPreview(shopData.gpay_qr_url);
       }
     } catch (error: any) {
       toast.error('Failed to load profile');
@@ -96,20 +94,20 @@ export default function VendorProfile() {
 
       if (profileError) throw profileError;
 
-      // Upload GPay QR if changed - save to profile
-      if (gpayQrFile) {
+      // Upload GPay QR if changed
+      if (gpayQrFile && shop) {
         const uploadedUrl = await uploadImage(gpayQrFile);
         if (!uploadedUrl) {
           toast.error('Failed to upload GPay QR');
           return;
         }
 
-        const { error: qrError } = await supabase
-          .from('profiles')
+        const { error: shopError } = await supabase
+          .from('shops')
           .update({ gpay_qr_url: uploadedUrl })
-          .eq('id', user?.id);
+          .eq('id', shop.id);
 
-        if (qrError) throw qrError;
+        if (shopError) throw shopError;
       }
 
       toast.success('✅ Profile updated successfully');

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -10,52 +10,6 @@ import { Shop } from '@/hooks/useShops';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Minus, Plus, QrCode, Store, MapPin, Package } from 'lucide-react';
-
-// Component to fetch and display GPay QR from vendor's profile
-function GPayQRSection({ shopOwnerId }: { shopOwnerId: string }) {
-  const [gpayQrUrl, setGpayQrUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchGPayQR = async () => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('gpay_qr_url')
-        .eq('id', shopOwnerId)
-        .maybeSingle();
-
-      if (!error && data?.gpay_qr_url) {
-        setGpayQrUrl(data.gpay_qr_url);
-      }
-    };
-    fetchGPayQR();
-  }, [shopOwnerId]);
-
-  if (!gpayQrUrl) return null;
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.5 }}
-      className="p-6 rounded-xl bg-gradient-to-br from-primary/10 to-secondary/10 border-2 border-primary/20"
-    >
-      <div className="flex items-center gap-2 mb-4">
-        <QrCode className="w-5 h-5 text-primary" />
-        <h4 className="font-semibold">Scan & Pay using Google Pay</h4>
-      </div>
-      <div className="flex justify-center">
-        <img
-          src={gpayQrUrl}
-          alt="Google Pay QR"
-          className="w-48 h-48 rounded-lg shadow-lg"
-        />
-      </div>
-      <p className="text-sm text-muted-foreground text-center mt-4">
-        Scan this QR code with your Google Pay app to complete payment
-      </p>
-    </motion.div>
-  );
-}
 
 interface CheckoutModalProps {
   isOpen: boolean;
@@ -69,55 +23,16 @@ export default function CheckoutModal({ isOpen, onClose, product, shop }: Checko
   const [deliveryAddress, setDeliveryAddress] = useState('');
   const [deliveryInstructions, setDeliveryInstructions] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [couponCode, setCouponCode] = useState('');
-  const [couponApplied, setCouponApplied] = useState(false);
-  const [discount, setDiscount] = useState(0);
 
   if (!product || !shop) return null;
 
-  const originalPrice = product.price * quantity;
-  const totalPrice = originalPrice - discount;
+  const totalPrice = product.price * quantity;
   const maxQuantity = product.stock;
 
   const handleQuantityChange = (delta: number) => {
     const newQuantity = quantity + delta;
     if (newQuantity >= 1 && newQuantity <= maxQuantity) {
       setQuantity(newQuantity);
-      // Recalculate discount if coupon applied
-      if (couponApplied && couponCode) {
-        handleApplyCoupon();
-      }
-    }
-  };
-
-  const handleApplyCoupon = async () => {
-    if (!couponCode.trim()) {
-      toast.error('Please enter a coupon code');
-      return;
-    }
-
-    try {
-      const { data, error } = await (supabase.rpc as any)('apply_coupon_discount', {
-        coupon_code_param: couponCode.toUpperCase(),
-        order_amount: originalPrice,
-      });
-
-      if (error) throw error;
-
-      const result = data[0];
-      if (result.valid) {
-        setDiscount(result.discount_amount);
-        setCouponApplied(true);
-        toast.success(`Coupon applied! You saved ₹${result.discount_amount}`);
-      } else {
-        toast.error(result.message);
-        setDiscount(0);
-        setCouponApplied(false);
-      }
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to apply coupon');
-      setDiscount(0);
-      setCouponApplied(false);
     }
   };
 
@@ -135,44 +50,34 @@ export default function CheckoutModal({ isOpen, onClose, product, shop }: Checko
         return;
       }
 
-      // Get profile id from user
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (!profile) {
-        toast.error('Profile not found');
-        return;
-      }
-
-      // Get vendor from product
-      const { data: productData } = await supabase
-        .from('products')
-        .select('vendor_id')
-        .eq('id', product.id)
-        .single();
-
-      if (!productData) {
-        toast.error('Product not found');
-        return;
-      }
-
       // Create order
-      const { error: orderError } = await supabase
+      const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert({
-          customer_id: profile.id,
-          vendor_id: productData.vendor_id,
-          product_id: product.id,
-          quantity,
-          total_price: totalPrice,
-          payment_mode: 'cod',
+          user_id: user.id,
+          total_amount: totalPrice,
+          delivery_address: deliveryAddress.trim(),
+          delivery_instructions: deliveryInstructions.trim() || null,
           status: 'pending',
-        });
+          payment_status: 'pending'
+        })
+        .select()
+        .single();
 
       if (orderError) throw orderError;
+
+      // Create order item
+      const { error: itemError } = await supabase
+        .from('order_items')
+        .insert({
+          order_id: order.id,
+          product_id: product.id,
+          shop_id: shop.id,
+          quantity,
+          price: product.price
+        });
+
+      if (itemError) throw itemError;
 
       // Update product stock
       const { error: stockError } = await supabase
@@ -244,11 +149,11 @@ export default function CheckoutModal({ isOpen, onClose, product, shop }: Checko
           >
             <div className="flex items-center gap-3 mb-2">
               <Store className="w-5 h-5 text-secondary" />
-              <h4 className="font-semibold">{shop.shop_name}</h4>
+              <h4 className="font-semibold">{shop.name}</h4>
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <MapPin className="w-4 h-4" />
-              <span>{shop.address}</span>
+              <span>{shop.location}</span>
             </div>
           </motion.div>
 
@@ -317,64 +222,40 @@ export default function CheckoutModal({ isOpen, onClose, product, shop }: Checko
             />
           </motion.div>
 
-          {/* Coupon Code */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.45 }}
-            className="space-y-2"
-          >
-            <Label>Coupon Code (Optional)</Label>
-            <div className="flex gap-2">
-              <Input
-                value={couponCode}
-                onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                placeholder="LOCAL-CART01"
-                disabled={couponApplied}
-                className="uppercase"
-              />
-              <Button
-                type="button"
-                variant={couponApplied ? "secondary" : "outline"}
-                onClick={handleApplyCoupon}
-                disabled={couponApplied || !couponCode.trim()}
-              >
-                {couponApplied ? 'Applied ✓' : 'Apply'}
-              </Button>
-            </div>
-            {couponApplied && (
-              <p className="text-sm text-green-600 font-medium">
-                🎉 Coupon applied! You saved ₹{discount.toFixed(2)}
+          {/* Google Pay QR */}
+          {shop.gpay_qr_url && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="p-6 rounded-xl bg-gradient-to-br from-primary/10 to-secondary/10 border-2 border-primary/20"
+            >
+              <div className="flex items-center gap-2 mb-4">
+                <QrCode className="w-5 h-5 text-primary" />
+                <h4 className="font-semibold">Scan & Pay using Google Pay</h4>
+              </div>
+              <div className="flex justify-center">
+                <img
+                  src={shop.gpay_qr_url}
+                  alt="Google Pay QR"
+                  className="w-48 h-48 rounded-lg shadow-lg"
+                />
+              </div>
+              <p className="text-sm text-muted-foreground text-center mt-4">
+                Scan this QR code with your Google Pay app to complete payment
               </p>
-            )}
-          </motion.div>
-
-          {/* Google Pay QR - Now fetched from vendor profile */}
-          <GPayQRSection shopOwnerId={shop.user_id} />
+            </motion.div>
+          )}
 
           {/* Total */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6 }}
-            className="space-y-2 p-4 rounded-xl bg-gradient-to-r from-primary/10 to-secondary/10 border border-primary/20"
+            className="flex justify-between items-center p-4 rounded-xl bg-gradient-to-r from-primary/10 to-secondary/10 border border-primary/20"
           >
-            {discount > 0 && (
-              <>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Subtotal:</span>
-                  <span className="line-through">₹{originalPrice.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-sm text-green-600 font-medium">
-                  <span>Discount:</span>
-                  <span>- ₹{discount.toFixed(2)}</span>
-                </div>
-              </>
-            )}
-            <div className="flex justify-between items-center">
-              <span className="text-lg font-semibold">Total Amount:</span>
-              <span className="text-2xl font-bold text-primary">₹{totalPrice.toFixed(2)}</span>
-            </div>
+            <span className="text-lg font-semibold">Total Amount:</span>
+            <span className="text-3xl font-bold text-primary">₹{totalPrice.toFixed(2)}</span>
           </motion.div>
 
           {/* Action Buttons */}

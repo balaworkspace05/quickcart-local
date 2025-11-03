@@ -120,7 +120,7 @@ export default function ProductListing() {
             {/* Shop Logo */}
             <div className="w-20 h-20 bg-gradient-primary rounded-full flex items-center justify-center text-white text-3xl overflow-hidden">
               {shop.logo_url ? (
-                <img src={shop.logo_url} alt={shop.shop_name} className="w-full h-full object-cover" />
+                <img src={shop.logo_url} alt={shop.name} className="w-full h-full object-cover" />
               ) : (
                 '🏪'
               )}
@@ -129,22 +129,24 @@ export default function ProductListing() {
             {/* Shop Info */}
             <div className="flex-1">
               <div className="flex items-center space-x-3 mb-2">
-                <h1 className="text-2xl font-bold">{shop.shop_name}</h1>
-                <Badge variant="default">Open</Badge>
+                <h1 className="text-2xl font-bold">{shop.name}</h1>
+                <Badge variant={shop.is_open ? "default" : "secondary"}>
+                  {shop.is_open ? 'Open' : 'Closed'}
+                </Badge>
               </div>
               
               <div className="flex items-center space-x-6 text-muted-foreground">
                 <div className="flex items-center space-x-1">
                   <Star className="w-4 h-4 fill-current text-warning" />
-                  <span>4.5</span>
+                  <span>{shop.rating?.toFixed(1) || '0.0'}</span>
                 </div>
                 <div className="flex items-center space-x-1">
                   <MapPin className="w-4 h-4" />
-                  <span>Nearby</span>
+                  <span>{shop.distance} away</span>
                 </div>
                 <div className="flex items-center space-x-1">
                   <Clock className="w-4 h-4" />
-                  <span>30-45 min</span>
+                  <span>{shop.delivery_time}</span>
                 </div>
               </div>
             </div>
@@ -258,15 +260,15 @@ export default function ProductListing() {
           transition={{ delay: 0.4 }}
           className="mt-12 bg-gradient-card rounded-lg p-6 shadow-card"
         >
-          <h3 className="font-semibold mb-4">About {shop.shop_name}</h3>
+          <h3 className="font-semibold mb-4">About {shop.name}</h3>
           <div className="grid md:grid-cols-2 gap-6">
             <div>
               <h4 className="font-medium mb-2">Store Details</h4>
               <ul className="space-y-2 text-muted-foreground">
-                <li>📍 Nearby location</li>
-                <li>⭐ 4.5 rating from customers</li>
-                <li>🕒 Delivery in 30-45 min</li>
-                <li>🏪 Local store</li>
+                <li>📍 {shop.distance} from your location</li>
+                <li>⭐ {shop.rating?.toFixed(1) || '0.0'} rating from customers</li>
+                <li>🕒 Delivery in {shop.delivery_time}</li>
+                <li>🏪 {shop.category.charAt(0).toUpperCase() + shop.category.slice(1)} store</li>
               </ul>
             </div>
             

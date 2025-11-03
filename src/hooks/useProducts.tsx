@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 
 export interface Product {
   id: string;
-  vendor_id: string;
+  shop_id: string;
   name: string;
   description: string | null;
   price: number;
@@ -13,21 +13,22 @@ export interface Product {
   image_url: string | null;
   category: string;
   unit: string;
-  in_stock: boolean;
+  is_available: boolean;
   created_at: string;
+  updated_at: string;
 }
 
-export function useProducts(vendorId?: string) {
+export function useProducts(shopId?: string) {
   return useQuery({
-    queryKey: ['products', vendorId],
+    queryKey: ['products', shopId],
     queryFn: async () => {
       let query = supabase
         .from('products')
         .select('*')
-        .eq('in_stock', true);
+        .eq('is_available', true);
 
-      if (vendorId) {
-        query = query.eq('vendor_id', vendorId);
+      if (shopId) {
+        query = query.eq('shop_id', shopId);
       }
 
       const { data, error } = await query.order('created_at', { ascending: false });
@@ -59,7 +60,7 @@ export function useCreateProduct() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (product: Omit<Product, 'id' | 'created_at'>) => {
+    mutationFn: async (product: Omit<Product, 'id' | 'created_at' | 'updated_at'>) => {
       const { data, error } = await supabase
         .from('products')
         .insert(product)

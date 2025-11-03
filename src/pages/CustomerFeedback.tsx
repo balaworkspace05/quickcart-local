@@ -57,26 +57,7 @@ export default function CustomerFeedback() {
       return;
     }
     fetchData();
-    setupRealtimeSubscriptions();
   }, [user, userRole, navigate]);
-
-  const setupRealtimeSubscriptions = () => {
-    // Subscribe to review changes
-    const reviewsChannel = supabase
-      .channel('customer-reviews')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'feedback'
-      }, () => {
-        fetchReviews();
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(reviewsChannel);
-    };
-  };
 
   const fetchData = async () => {
     await Promise.all([fetchReviews(), fetchDeliveredOrders()]);
@@ -84,53 +65,28 @@ export default function CustomerFeedback() {
 
   const fetchDeliveredOrders = async () => {
     try {
-      // Get profile id from user
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('user_id', user?.id)
-        .single();
-
-      if (!profile) return;
-
       const { data, error } = await supabase
         .from('orders')
         .select(`
           id,
           created_at,
-          product_id,
-          products (
-            id,
-            name,
-            vendors (
+          order_items (
+            products (
               id,
-              shop_name
+              name,
+              shops (
+                id,
+                name
+              )
             )
           )
         `)
-        .eq('customer_id', profile.id)
+        .eq('user_id', user?.id)
         .eq('status', 'delivered')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      
-      // Transform to match expected structure
-      const transformedOrders = data?.map(order => ({
-        id: order.id,
-        created_at: order.created_at,
-        order_items: order.products ? [{
-          products: {
-            id: order.products.id,
-            name: order.products.name,
-            shops: {
-              id: order.products.vendors?.id || '',
-              name: order.products.vendors?.shop_name || ''
-            }
-          }
-        }] : []
-      })) || [];
-      
-      setDeliveredOrders(transformedOrders);
+      setDeliveredOrders(data || []);
     } catch (error: any) {
       console.error('Failed to load orders:', error);
     }
@@ -138,47 +94,22 @@ export default function CustomerFeedback() {
 
   const fetchReviews = async () => {
     try {
-      // Get profile id from user
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('user_id', user?.id)
-        .single();
-
-      if (!profile) return;
-
       const { data, error } = await supabase
-        .from('feedback')
+        .from('reviews')
         .select(`
           *,
           products (
             name,
-            vendors (
-              shop_name
+            shops (
+              name
             )
           )
         `)
-        .eq('customer_id', profile.id)
+        .eq('user_id', user?.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      
-      // Transform to match expected Review structure
-      const transformedReviews = data?.map(fb => ({
-        id: fb.id,
-        rating: fb.rating || 0,
-        feedback: fb.comment || '',
-        created_at: fb.created_at,
-        product_id: fb.product_id || '',
-        products: fb.products ? {
-          name: fb.products.name,
-          shops: {
-            name: fb.products.vendors?.shop_name || ''
-          }
-        } : undefined
-      })) || [];
-      
-      setReviews(transformedReviews);
+      setReviews(data || []);
     } catch (error: any) {
       toast.error('Failed to load feedback');
     } finally {
@@ -198,33 +129,14 @@ export default function CustomerFeedback() {
     }
 
     try {
-      // Get profile id from user
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('user_id', user?.id)
-        .single();
-
-      if (!profile) {
-        toast.error('Profile not found');
-        return;
-      }
-
-      // Get vendor_id from product
-      const { data: product } = await supabase
-        .from('products')
-        .select('vendor_id')
-        .eq('id', selectedProductId)
-        .single();
-
       const { error } = await supabase
-        .from('feedback')
+        .from('reviews')
         .insert({
-          customer_id: profile.id,
+          user_id: user?.id,
           product_id: selectedProductId,
-          vendor_id: product?.vendor_id || null,
+          order_id: selectedOrderId,
           rating,
-          comment: feedback,
+          feedback,
         });
 
       if (error) throw error;

@@ -27,13 +27,13 @@ interface Product {
   stock: number;
   category: string;
   image_url: string | null;
-  in_stock: boolean;
+  is_available: boolean;
   unit: string | null;
 }
 
 interface Shop {
   id: string;
-  shop_name: string;
+  name: string;
   logo_url: string | null;
 }
 
@@ -58,18 +58,8 @@ export default function VendorInventory() {
   const [imagePreview, setImagePreview] = useState<string>('');
   const { uploadImage, uploading, uploadProgress } = useImageUpload('product-images');
 
-  // Check for demo user
-  const getDemoUser = () => {
-    const demoUserData = localStorage.getItem('demo_user');
-    if (demoUserData) {
-      return JSON.parse(demoUserData);
-    }
-    return null;
-  };
-
   useEffect(() => {
-    const demoUser = getDemoUser();
-    if (user || demoUser) {
+    if (user) {
       loadData();
     }
   }, [user]);
@@ -78,30 +68,11 @@ export default function VendorInventory() {
     try {
       setLoading(true);
       
-      // Get profile id from user or demo user
-      const demoUser = getDemoUser();
-      let profileId = null;
-
-      if (demoUser) {
-        // Use demo user profile
-        profileId = demoUser.profile.id;
-      } else if (user) {
-        // Get profile id from authenticated user
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('user_id', user.id)
-          .single();
-        profileId = profile?.id;
-      }
-
-      if (!profileId) return;
-      
       // Fetch or create shop for vendor
       let { data: shopData, error: shopError } = await supabase
-        .from('vendors')
-        .select('id, shop_name, logo_url')
-        .eq('user_id', profileId)
+        .from('shops')
+        .select('id, name, logo_url')
+        .eq('owner_id', user?.id)
         .maybeSingle();
 
       if (shopError) {
@@ -111,22 +82,26 @@ export default function VendorInventory() {
       }
       
       // If no shop exists, create one automatically
-      if (!shopData && profileId) {
+      if (!shopData) {
         const { data: profileData } = await supabase
           .from('profiles')
           .select('name, address')
-          .eq('id', profileId)
+          .eq('id', user?.id)
           .maybeSingle();
 
         const { data: newShop, error: createError } = await supabase
-          .from('vendors')
+          .from('shops')
           .insert({
-            user_id: profileId,
-            shop_name: profileData?.name ? `${profileData.name}'s Shop` : 'My Shop',
-            address: profileData?.address || 'Location not set',
-            owner_name: profileData?.name || 'Owner'
+            owner_id: user?.id,
+            name: profileData?.name ? `${profileData.name}'s Shop` : 'My Shop',
+            location: profileData?.address || 'Location not set',
+            category: 'General',
+            is_open: true,
+            rating: 0.0,
+            delivery_time: '20-30 mins',
+            distance: '1.5 km'
           })
-          .select('id, shop_name, logo_url')
+          .select('id, name, logo_url')
           .single();
 
         if (createError) {
@@ -145,7 +120,7 @@ export default function VendorInventory() {
         const { data: productsData, error: productsError } = await supabase
           .from('products')
           .select('*')
-          .eq('vendor_id', shopData.id)
+          .eq('shop_id', shopData.id)
           .order('created_at', { ascending: false });
 
         if (productsError) throw productsError;
@@ -169,7 +144,7 @@ export default function VendorInventory() {
         event: '*',
         schema: 'public',
         table: 'products',
-        filter: `vendor_id=eq.${shop.id}`
+        filter: `shop_id=eq.${shop.id}`
       }, () => {
         loadData();
       })
@@ -238,7 +213,7 @@ export default function VendorInventory() {
       }
 
       const productData = {
-        vendor_id: shop.id,
+        shop_id: shop.id,
         name: productForm.name.trim(),
         description: productForm.description.trim() || null,
         price: parseFloat(productForm.price),
@@ -246,7 +221,7 @@ export default function VendorInventory() {
         stock: parseInt(productForm.stock),
         category: productForm.category.trim(),
         unit: productForm.unit,
-        in_stock: true,
+        is_available: true,
         image_url,
       };
 
@@ -291,11 +266,11 @@ export default function VendorInventory() {
     try {
       const { error } = await supabase
         .from('products')
-        .update({ in_stock: !product.in_stock })
+        .update({ is_available: !product.is_available })
         .eq('id', product.id);
 
       if (error) throw error;
-      toast.success(`Product ${product.in_stock ? 'disabled' : 'enabled'}`);
+      toast.success(`Product ${product.is_available ? 'disabled' : 'enabled'}`);
       loadData();
     } catch (error: any) {
       toast.error('Failed to update product');
@@ -342,7 +317,7 @@ export default function VendorInventory() {
 
   if (loading) {
     return (
-      <VendorLayout shopName={shop?.shop_name}>
+      <VendorLayout shopName={shop?.name}>
         <div className="space-y-6">
           <Skeleton className="h-10 w-64" />
           <Skeleton className="h-96" />
@@ -352,7 +327,7 @@ export default function VendorInventory() {
   }
 
   return (
-    <VendorLayout shopName={shop?.shop_name} shopLogo={shop?.logo_url}>
+    <VendorLayout shopName={shop?.name} shopLogo={shop?.logo_url}>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -561,8 +536,8 @@ export default function VendorInventory() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={product.in_stock ? 'default' : 'secondary'}>
-                          {product.in_stock ? 'Active' : 'Inactive'}
+                        <Badge variant={product.is_available ? 'default' : 'secondary'}>
+                          {product.is_available ? 'Active' : 'Inactive'}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
@@ -572,7 +547,7 @@ export default function VendorInventory() {
                             variant="ghost"
                             onClick={() => handleToggleAvailability(product)}
                           >
-                            {product.in_stock ? 'Disable' : 'Enable'}
+                            {product.is_available ? 'Disable' : 'Enable'}
                           </Button>
                           <Button
                             size="sm"

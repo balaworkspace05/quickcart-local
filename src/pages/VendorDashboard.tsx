@@ -32,12 +32,12 @@ interface Product {
   name: string;
   stock: number;
   category: string;
-  in_stock: boolean;
+  is_available: boolean;
 }
 
 interface Order {
   id: string;
-  total_price: number;
+  total_amount: number;
   status: string;
   created_at: string;
   profiles?: { name: string };
@@ -57,131 +57,63 @@ export default function VendorDashboard() {
     activeProducts: 0,
   });
 
-  // Check for demo user
-  const getDemoUser = () => {
-    const demoUserData = localStorage.getItem('demo_user');
-    if (demoUserData) {
-      return JSON.parse(demoUserData);
-    }
-    return null;
-  };
-
   useEffect(() => {
-    const demoUser = getDemoUser();
-    if (user || demoUser) {
+    if (user) {
       loadData();
-      setupRealtimeSubscriptions();
     }
   }, [user]);
-
-  const setupRealtimeSubscriptions = () => {
-    if (!shop?.id) return;
-
-    // Subscribe to product changes
-    const productsChannel = supabase
-      .channel('vendor-products')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'products',
-        filter: `vendor_id=eq.${shop.id}`
-      }, () => {
-        loadData();
-      })
-      .subscribe();
-
-    // Subscribe to order changes
-    const ordersChannel = supabase
-      .channel('vendor-orders')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'orders',
-        filter: `vendor_id=eq.${shop.id}`
-      }, () => {
-        loadData();
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(productsChannel);
-      supabase.removeChannel(ordersChannel);
-    };
-  };
 
   const loadData = async () => {
     try {
       setLoading(true);
-      
-      // Get profile id from user or demo user
-      const demoUser = getDemoUser();
-      let profileId = null;
-
-      if (demoUser) {
-        // Use demo user profile
-        profileId = demoUser.profile.id;
-      } else if (user) {
-        // Get profile id from authenticated user
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('user_id', user.id)
-          .single();
-        profileId = profile?.id;
-      }
-
-      if (!profileId) return;
-
       const { data: shopData, error: shopError } = await supabase
-        .from('vendors')
-        .select('id, shop_name, logo_url')
-        .eq('user_id', profileId)
-        .maybeSingle();
+        .from('shops')
+        .select('*')
+        .eq('owner_id', user?.id)
+        .single();
 
       if (shopError) throw shopError;
-      
-      const transformedShop = shopData ? {
-        id: shopData.id,
-        name: shopData.shop_name,
-        logo_url: shopData.logo_url,
-        rating: 4.5,
-        category: 'general'
-      } : null;
-      
-      setShop(transformedShop);
+      setShop(shopData);
 
       if (shopData) {
         const { data: productsData } = await supabase
           .from('products')
           .select('*')
-          .eq('vendor_id', shopData.id);
+          .eq('shop_id', shopData.id);
 
         setProducts(productsData || []);
 
-        const { data: ordersData } = await supabase
-          .from('orders')
-          .select('*, profiles(name)')
-          .eq('vendor_id', shopData.id);
+        const { data: orderItemsData } = await supabase
+          .from('order_items')
+          .select('*, orders(*, profiles(name))')
+          .eq('shop_id', shopData.id);
 
-        setOrders(ordersData || []);
+        const uniqueOrders = orderItemsData
+          ?.map((item: any) => item.orders)
+          .filter((order: any, index: number, self: any[]) =>
+            index === self.findIndex((o: any) => o?.id === order?.id)
+          )
+          .filter((order: any) => order !== null) || [];
+
+        setOrders(uniqueOrders);
 
         const today = new Date().toISOString().split('T')[0];
-        const todayOrders = (ordersData || []).filter((o: any) => o.created_at.startsWith(today)).length;
-        const deliveredOrders = (ordersData || []).filter((o: any) => o.status === 'delivered');
-        const totalRevenue = deliveredOrders.reduce((sum: number, o: any) => sum + Number(o.total_price), 0);
-        const activeProducts = productsData?.filter(p => p.in_stock && p.stock > 0).length || 0;
+        const todayOrders = uniqueOrders.filter((o: Order) => o.created_at.startsWith(today)).length;
+        const deliveredOrders = uniqueOrders.filter((o: Order) => o.status === 'delivered');
+        const totalRevenue = deliveredOrders.reduce((sum: number, o: Order) => sum + Number(o.total_amount), 0);
+        const activeProducts = productsData?.filter(p => p.is_available && p.stock > 0).length || 0;
 
         setStats({
           todayOrders,
           totalRevenue,
-          avgRating: 4.5,
+          avgRating: shopData.rating || 0,
           activeProducts,
         });
 
         const { data: notificationsData } = await supabase
           .from('notifications')
           .select('*')
-          .eq('receiver_id', profileId)
+          .eq('user_id', user?.id)
           .limit(5);
 
         setNotifications(notificationsData || []);
@@ -307,7 +239,7 @@ export default function VendorDashboard() {
                         <p className="text-sm text-muted-foreground">{order.profiles?.name || 'Customer'}</p>
                       </div>
                       <div className="text-right">
-                        <p className="font-bold">₹{Number(order.total_price).toFixed(2)}</p>
+                        <p className="font-bold">₹{Number(order.total_amount).toFixed(2)}</p>
                         <Badge>{order.status}</Badge>
                       </div>
                     </div>
@@ -327,9 +259,9 @@ export default function VendorDashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {products.filter(p => p.stock <= 10 && p.in_stock).length > 0 ? (
+              {products.filter(p => p.stock <= 10 && p.is_available).length > 0 ? (
                 <div className="space-y-4">
-                  {products.filter(p => p.stock <= 10 && p.in_stock).slice(0, 5).map((product) => (
+                  {products.filter(p => p.stock <= 10 && p.is_available).slice(0, 5).map((product) => (
                     <div key={product.id} className="flex items-center justify-between p-4 bg-accent rounded-lg">
                       <div>
                         <p className="font-medium">{product.name}</p>

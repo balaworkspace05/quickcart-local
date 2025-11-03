@@ -56,15 +56,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const fetchUserRole = async (userId: string) => {
-    // Get profile id from auth.users.id
-    const { data: profile, error } = await supabase
-      .from('profiles')
-      .select('role, id')
+    const { data, error } = await supabase
+      .from('user_roles')
+      .select('role')
       .eq('user_id', userId)
       .single();
 
-    if (profile && profile.role) {
-      setUserRole(profile.role as UserRole);
+    if (data) {
+      setUserRole(data.role as UserRole);
     }
     
     if (error && error.code !== 'PGRST116') {
@@ -74,7 +73,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithMagicLink = async (email: string) => {
     try {
-      const redirectUrl = `${window.location.origin}/`;
+      const redirectUrl = `${window.location.origin}/auth/callback`;
       
       const { error } = await supabase.auth.signInWithOtp({
         email,

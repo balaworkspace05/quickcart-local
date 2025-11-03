@@ -22,11 +22,11 @@ interface User {
   email?: string;
 }
 
-interface Vendor {
+interface Shop {
   id: string;
-  shop_name: string;
-  user_id: string;
-  owner_name: string | null;
+  name: string;
+  owner_id: string;
+  category: string;
   created_at: string;
 }
 
@@ -35,7 +35,7 @@ export default function AdminDashboard() {
   const navigate = useNavigate();
   const [customers, setCustomers] = useState<User[]>([]);
   const [vendors, setVendors] = useState<User[]>([]);
-  const [vendorShops, setVendorShops] = useState<Vendor[]>([]);
+  const [shops, setShops] = useState<Shop[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
@@ -54,18 +54,19 @@ export default function AdminDashboard() {
 
   const fetchAllData = async () => {
     try {
-      // Fetch all users with their roles from profiles
+      // Fetch all users with their roles
       const { data: profilesData } = await supabase.from('profiles').select('*');
+      const { data: rolesData } = await supabase.from('user_roles').select('*');
       
-      if (!profilesData) {
+      if (!profilesData || !rolesData) {
         throw new Error('Failed to fetch data');
       }
       
-      // Separate customers and vendors based on profile role
-      const customers = profilesData.filter(p => p.role === 'customer');
-      const vendors = profilesData.filter(p => p.role === 'vendor' || p.role === 'shopkeeper');
+      // Separate customers and vendors
+      const customerIds = rolesData.filter(r => r.role === 'customer').map(r => r.user_id);
+      const vendorIds = rolesData.filter(r => r.role === 'shopkeeper').map(r => r.user_id);
       
-      // Enrich profiles with email (email is already in profiles table)
+      // Enrich profiles with email (email is not in profiles table but we can get from auth)
       const enrichedProfiles: User[] = profilesData.map(profile => ({
         id: profile.id,
         name: profile.name,
@@ -75,13 +76,13 @@ export default function AdminDashboard() {
         email: 'Email not available' // Email from auth context would need separate fetch
       }));
       
-      setCustomers(enrichedProfiles.filter(p => customers.map(c => c.id).includes(p.id)));
-      setVendors(enrichedProfiles.filter(p => vendors.map(v => v.id).includes(p.id)));
+      setCustomers(enrichedProfiles.filter(p => customerIds.includes(p.id)));
+      setVendors(enrichedProfiles.filter(p => vendorIds.includes(p.id)));
 
-      // Fetch vendor shops
-      const { data: vendorsData } = await supabase.from('vendors').select('*');
-      if (vendorsData) {
-        setVendorShops(vendorsData);
+      // Fetch shops
+      const { data: shopsData } = await supabase.from('shops').select('*');
+      if (shopsData) {
+        setShops(shopsData);
       }
 
       // Fetch orders
@@ -119,9 +120,9 @@ export default function AdminDashboard() {
       const { error } = await supabase
         .from('notifications')
         .insert({
-          receiver_id: selectedUser,
+          user_id: selectedUser,
           message: noteMessage,
-          sender_role: 'Admin',
+          sent_by: 'Admin',
         });
 
       if (error) throw error;
@@ -138,7 +139,7 @@ export default function AdminDashboard() {
 
   const stats = [
     { icon: Users, label: 'Total Users', value: customers.length + vendors.length, color: 'text-primary' },
-    { icon: Store, label: 'Total Shops', value: vendorShops.length, color: 'text-secondary' },
+    { icon: Store, label: 'Total Shops', value: shops.length, color: 'text-secondary' },
     { icon: Package, label: 'Total Orders', value: orders.length, color: 'text-accent' },
     { icon: TrendingUp, label: 'Revenue', value: `₹${totalRevenue.toFixed(2)}`, color: 'text-primary' },
   ];

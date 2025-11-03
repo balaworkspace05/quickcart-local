@@ -299,12 +299,6 @@ export default function Cart() {
                   className="w-full bg-gradient-primary text-lg py-6"
                   size="lg"
                   disabled={!paymentMethod}
-                  onClick={() => {
-                    // For demo: just show success message and clear cart
-                    alert(`Order placed successfully! Total: ₹${finalTotal}`);
-                    clearCart();
-                    window.location.href = '/shops';
-                  }}
                 >
                   {paymentMethod === 'later' ? 'Place Order' : 'Proceed to Payment'}
                   <ArrowRight className="ml-2 w-5 h-5" />

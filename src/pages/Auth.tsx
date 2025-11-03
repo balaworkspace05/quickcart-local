@@ -148,7 +148,7 @@ export default function Auth() {
         email: formData.email,
         password: formData.password,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth?verified=true`,
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
           data: metadata,
         },
       });
@@ -187,16 +187,14 @@ export default function Auth() {
       }
 
       if (data.user) {
-        // Get profile and role from profiles table
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('role, id')
+        const { data: roleData } = await supabase
+          .from('user_roles')
+          .select('role')
           .eq('user_id', data.user.id)
           .single();
 
-        if (profileData && profileData.role) {
-          toast.success('Login successful!');
-          switch (profileData.role) {
+        if (roleData) {
+          switch (roleData.role) {
             case 'customer':
               navigate('/customer/dashboard');
               break;
@@ -213,9 +211,10 @@ export default function Auth() {
               navigate('/customer/dashboard');
           }
         } else {
-          toast.error('No role assigned. Please contact support.');
-          await supabase.auth.signOut();
+          // No role found, redirect to role selection
+          navigate('/auth/callback');
         }
+        toast.success('Login successful!');
       }
     } catch (error: any) {
       // Error already handled
