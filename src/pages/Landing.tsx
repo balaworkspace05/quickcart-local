@@ -20,10 +20,10 @@ import { motion } from 'framer-motion';
 import FeaturedShopsCarousel from '@/components/revenue/FeaturedShopsCarousel';
 import OffersCarousel from '@/components/revenue/OffersCarousel';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import localCartDemoVideo from '@/assets/localcart-video-demo.mp4.asset.json';
 
 export default function Landing() {
   const [isVideoOpen, setIsVideoOpen] = useState(false);
-  const videoPreviewUrl = 'https://drive.google.com/file/d/1drvuZ6PQL69RSDy1Ks1uhBZv4xqvmHG8/preview?autoplay=1';
 
   const features = [
     {
@@ -272,13 +272,14 @@ export default function Landing() {
           </DialogHeader>
           <div className="aspect-video overflow-hidden rounded-md bg-muted">
             {isVideoOpen && (
-              <iframe
+              <video
                 title="LocalCart app video demo"
-                src={videoPreviewUrl}
-                className="h-full w-full border-0"
-                allow="autoplay; encrypted-media; picture-in-picture"
-                allowFullScreen
-                referrerPolicy="strict-origin-when-cross-origin"
+                src={localCartDemoVideo.url}
+                className="h-full w-full"
+                controls
+                autoPlay
+                playsInline
+                preload="auto"
               />
             )}
           </div>
