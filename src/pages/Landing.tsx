@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -9,15 +10,21 @@ import {
   ChevronRight,
   Shield,
   Clock,
-  Heart
+  Heart,
+  Play,
+  Video
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { testimonials } from '@/data/mockData';
 import { motion } from 'framer-motion';
 import FeaturedShopsCarousel from '@/components/revenue/FeaturedShopsCarousel';
 import OffersCarousel from '@/components/revenue/OffersCarousel';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import localCartDemoVideo from '@/assets/localcart-video-demo.mp4.asset.json';
 
 export default function Landing() {
+  const [isVideoOpen, setIsVideoOpen] = useState(false);
+
   const features = [
     {
       icon: Store,
@@ -214,6 +221,70 @@ export default function Landing() {
       <div className="container mx-auto px-4">
         <OffersCarousel location="Koramangala" />
       </div>
+
+      {/* Video Demo Section */}
+      <section className="py-20 relative" aria-labelledby="video-demo-heading">
+        <div className="container mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+            className="grid items-center gap-10 lg:grid-cols-[0.8fr_1.2fr]"
+          >
+            <div>
+              <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-primary">
+                <Video className="h-4 w-4" aria-hidden="true" />
+                Video demo
+              </div>
+              <h2 id="video-demo-heading" className="mb-4 text-3xl font-display font-bold md:text-5xl">
+                See LocalCart in action
+              </h2>
+              <p className="max-w-lg text-lg leading-relaxed text-muted-foreground font-body">
+                Take a closer look at the LocalCart app and the neighborhood shopping experience.
+              </p>
+            </div>
+
+            <Button
+              type="button"
+              variant="glass"
+              onClick={() => setIsVideoOpen(true)}
+              aria-label="Play the LocalCart video demo"
+              className="group relative flex aspect-video h-auto w-full min-h-56 flex-col items-center justify-center gap-4 overflow-hidden border border-primary/30 px-6 py-8 text-center shadow-floating"
+            >
+              <span className="absolute inset-0 bg-gradient-to-br from-primary/20 via-secondary/10 to-accent/20 transition-transform duration-700 group-hover:scale-105" aria-hidden="true" />
+              <span className="relative flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-glow transition-transform duration-300 group-hover:scale-110">
+                <Play className="ml-1 h-7 w-7 fill-current" aria-hidden="true" />
+              </span>
+              <span className="relative flex flex-col gap-1">
+                <span className="text-lg font-display font-bold">Play the video</span>
+                <span className="text-sm text-muted-foreground">LocalCart app overview</span>
+              </span>
+            </Button>
+          </motion.div>
+        </div>
+      </section>
+
+      <Dialog open={isVideoOpen} onOpenChange={setIsVideoOpen}>
+        <DialogContent className="w-[calc(100vw-2rem)] max-w-5xl border-border/50 bg-background/95 p-4 backdrop-blur-xl sm:p-6">
+          <DialogHeader>
+            <DialogTitle>LocalCart video demo</DialogTitle>
+          </DialogHeader>
+          <div className="aspect-video overflow-hidden rounded-md bg-muted">
+            {isVideoOpen && (
+              <video
+                title="LocalCart app video demo"
+                src={localCartDemoVideo.url}
+                className="h-full w-full"
+                controls
+                autoPlay
+                playsInline
+                preload="auto"
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Features Section */}
       <section className="py-20 relative">
