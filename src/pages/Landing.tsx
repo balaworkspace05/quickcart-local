@@ -131,6 +131,7 @@ export default function Landing() {
                 <Button 
                   variant="glass" 
                   size="lg" 
+                  onClick={() => setIsVideoOpen(true)}
                   className="text-lg px-10 py-7 h-auto border-2 border-primary/20"
                 >
                   How It Works
