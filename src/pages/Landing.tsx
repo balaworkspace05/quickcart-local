@@ -20,7 +20,7 @@ import { motion } from 'framer-motion';
 import FeaturedShopsCarousel from '@/components/revenue/FeaturedShopsCarousel';
 import OffersCarousel from '@/components/revenue/OffersCarousel';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import localCartDemoVideo from '@/assets/localcart-video-demo.mp4.asset.json';
+import localCartDemoVideo from '@/assets/localcart-demo-fast.mp4.asset.json';
 
 export default function Landing() {
   const [isVideoOpen, setIsVideoOpen] = useState(false);
@@ -281,6 +281,14 @@ export default function Landing() {
                 autoPlay
                 playsInline
                 preload="auto"
+                ref={(el) => {
+                  if (el && el.paused) {
+                    el.play().catch(() => {
+                      el.muted = true;
+                      el.play().catch(() => {});
+                    });
+                  }
+                }}
               />
             )}
           </div>
